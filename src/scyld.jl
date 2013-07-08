@@ -8,8 +8,6 @@ end
 
 
 function launch_scyld_workers(np::Integer, config::Dict)
-    disable_parallel_libs()
-    
     home = config[:dir]
     exename = config[:exename]
     exeflags = config[:exeflags]
