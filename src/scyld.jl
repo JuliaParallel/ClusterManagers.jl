@@ -27,5 +27,5 @@ function launch_scyld_workers(np::Integer, config::Dict)
 end
 
 
-addprocs_scyld(np::Integer) = addprocs(np, ScyldManager()) 
+addprocs_scyld(np::Integer) = addprocs(np, cman=ScyldManager()) 
  

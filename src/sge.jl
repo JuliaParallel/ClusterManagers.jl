@@ -38,4 +38,4 @@ function launch_sge_workers(np::Integer, config::Dict)
 end
 
 
-addprocs_sge(np::Integer) = addprocs(np, SGEManager()) 
+addprocs_sge(np::Integer) = addprocs(np, cman=SGEManager()) 
