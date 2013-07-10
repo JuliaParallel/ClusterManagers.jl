@@ -6,7 +6,7 @@ Currently support exists for :
 
 - Scyld
 
-To write a custom cluster manager:
+### To write a custom cluster manager:
 
 - Extend ClusterManager and expose ```launch_cb```
 
@@ -45,7 +45,9 @@ To write a custom cluster manager:
     - ```(:cmd, [cmd1, cmd2, ...])  ```
 
     ```io``` above is an IO object wrapping of STDOUT of the launched worker processes. 
+    
     ```cmd``` is a command object to be executed, which will launch the julia worker process
+    
     ```host``` and ```port``` can be specified to override the host/port of the worker process 
     bound to. For example, when the launched worker is behind a NATed firewall.
     
