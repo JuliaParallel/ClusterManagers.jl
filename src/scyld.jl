@@ -21,11 +21,14 @@ function launch_scyld_workers(np::Integer, config::Dict)
     nodes = split(chomp(readline(out)),':')
     outs = cell(np)
     for (i,node) in enumerate(nodes)
-        outs[i] = `bpsh $node sh -l -c "cd $home && $(exename) $(exeflags)"`
+        cmd = `bpsh $node sh -l -c "cd $home && $(exename) $(exeflags)"`
+        cmd.detach = true
+        outs[i],_ = readsfrom(cmd)
+        outs[i].line_buffered = true
     end
-    (:cmd, outs)
+    (:io_only, outs)
 end
 
 
 addprocs_scyld(np::Integer) = addprocs(np, cman=ScyldManager()) 
- 
+
