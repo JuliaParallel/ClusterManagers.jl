@@ -1,33 +1,36 @@
-export addprocs_sge, SGEManager
+export addprocs_pbs, PBSManager
 
-immutable SGEManager <: ClusterManager
+immutable PBSManager <: ClusterManager
     launch::Function
     manage::Function
 
-    SGEManager() = new(launch_sge_workers, manage_sge_worker)
+    PBSManager() = new(launch_pbs_workers, manage_pbs_worker)
 end
 
-function launch_sge_workers(cman::SGEManager, np::Integer, config::Dict)
+function launch_pbs_workers(cman::PBSManager, np::Integer, config::Dict)
     home = config[:dir]
     exename = config[:exename]
     exeflags = config[:exeflags]
 
-    sgedir = joinpath(pwd(),"SGE")
-    mkpath(sgedir)
+    pbsdir = joinpath(pwd(),"PBS")
+    mkpath(pbsdir)
 
-    qsub_cmd = `echo $home/$(exename) $(exeflags)` |> `qsub -N JULIA -terse -cwd -j y -o $sgedir -t 1-$np`
+    qsub_cmd = `echo $home/$(exename) $(exeflags)` |> `qsub -N JULIA -j oe -o $pbsdir -t 1-$np`
     out,qsub_proc = readsfrom(qsub_cmd)
     if !success(qsub_proc)
         error("batch queue not available (could not run qsub)")
     end
     id = chomp(split(readline(out),'.')[1])
+    if endswith(id, "[]")
+        id = id[1:end-2]
+    end
     println("job id is $id")
     print("waiting for job to start");
     io_objs = cell(np)
     configs = cell(np)
     for i=1:np
         # wait for each output stream file to get created
-        fname = "$sgedir/JULIA.o$id.$i"
+        fname = "$pbsdir/JULIA.o$id-$i"
         while !isfile(fname)
             print(".")
             sleep(0.5)
@@ -40,14 +43,14 @@ function launch_sge_workers(cman::SGEManager, np::Integer, config::Dict)
     (:cmd, collect(zip(io_objs, configs)))
 end
 
-function manage_sge_worker(id::Integer, config::Dict, op::Symbol)
+function manage_pbs_worker(id::Integer, config::Dict, op::Symbol)
     if op == :interrupt
         job = config[:job]
         task = config[:task]
         if !success(`qdel $job -t $task`)
-            println("Error sending a Ctrl-C to julia worker $id on SGE (job: $job, task: $task)")
+            println("Error sending a Ctrl-C to julia worker $id on PBS (job: $job, task: $task)")
         end
     end
 end
 
-addprocs_sge(np::Integer) = addprocs(np, cman=SGEManager())
+addprocs_pbs(np::Integer) = addprocs(np, cman=PBSManager())
