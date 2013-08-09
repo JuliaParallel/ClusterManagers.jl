@@ -12,7 +12,7 @@ function launch_scyld_workers(cman::ScyldManager, np::Integer, config::Dict)
     exename = config[:exename]
     exeflags = config[:exeflags]
     
-    beomap_cmd = `beomap --no-local --np $np`
+    beomap_cmd = `bpsh -1 beomap --no-local --np $np`
     out,beomap_proc = readsfrom(beomap_cmd)
     wait(beomap_proc)
     if !success(beomap_proc)
