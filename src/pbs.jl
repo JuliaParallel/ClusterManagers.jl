@@ -50,7 +50,7 @@ function manage_pbs_worker(id::Integer, config::Dict, op::Symbol)
         if !success(`qdel $job -t $task`)
             println("Error sending a Ctrl-C to julia worker $id on PBS (job: $job, task: $task)")
         end
-    elseif op == :deregister
+    elseif op == :finalize
         kill(config[:process])
         if isfile(config[:iofile])
             rm(config[:iofile])

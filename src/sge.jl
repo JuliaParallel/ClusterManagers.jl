@@ -33,11 +33,14 @@ function launch_sge_workers(cman::SGEManager, np::Integer, config::Dict)
             sleep(0.5)
         end
         # Hack to get Base to get the host:port, the Julia process has already started.
-        io_objs[i] = `tail -f $fname`
-        configs[i] = merge(config, {:job => id, :task => i})
+        cmd = `tail -f $fname`
+        cmd.detach = true
+        io_objs[i],proc = readsfrom(cmd)
+        io_objs[i].line_buffered = true
+        configs[i] = merge(config, {:job => id, :task => i, :process => proc})
     end
 
-    (:cmd, collect(zip(io_objs, configs)))
+    (:io_only, collect(zip(io_objs, configs)))
 end
 
 function manage_sge_worker(id::Integer, config::Dict, op::Symbol)
@@ -47,6 +50,8 @@ function manage_sge_worker(id::Integer, config::Dict, op::Symbol)
         if !success(`qdel $job -t $task`)
             println("Error sending a Ctrl-C to julia worker $id on SGE (job: $job, task: $task)")
         end
+    elseif op == :finalize
+        kill(config[:process])
     end
 end
 
