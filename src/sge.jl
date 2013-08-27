@@ -21,8 +21,7 @@ function launch_sge_workers(cman::SGEManager, np::Integer, config::Dict)
         error("batch queue not available (could not run qsub)")
     end
     id = chomp(split(readline(out),'.')[1])
-    println("job id is $id")
-    print("waiting for job to start");
+    print("job id is $id, waiting for job to start ")
     io_objs = cell(np)
     configs = cell(np)
     for i=1:np
@@ -39,7 +38,7 @@ function launch_sge_workers(cman::SGEManager, np::Integer, config::Dict)
         io_objs[i].line_buffered = true
         configs[i] = merge(config, {:job => id, :task => i, :process => proc})
     end
-
+    println("")
     (:io_only, collect(zip(io_objs, configs)))
 end
 

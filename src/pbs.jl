@@ -22,8 +22,7 @@ function launch_pbs_workers(cman::PBSManager, np::Integer, config::Dict)
     if endswith(id, "[]")
         id = id[1:end-2]
     end
-    println("job id is $id")
-    print("waiting for job to start")
+    print("job id is $id, waiting for job to start ")
     io_objs = cell(np)
     configs = cell(np)
     for i=1:np
