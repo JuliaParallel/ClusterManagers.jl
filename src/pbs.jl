@@ -12,10 +12,8 @@ function launch_pbs_workers(cman::PBSManager, np::Integer, config::Dict)
     exename = config[:exename]
     exeflags = config[:exeflags]
 
-    pbsdir = joinpath(pwd(),"PBS")
-    mkpath(pbsdir)
-
-    qsub_cmd = `echo $home/$(exename) $(exeflags)` |> `qsub -N JULIA -j oe -o $pbsdir -t 1-$np`
+    jobname = "julia-$(getpid())"
+    qsub_cmd = `echo $home/$(exename) $(exeflags)` |> `qsub -N $jobname -j oe -k o -t 1-$np`
     out,qsub_proc = readsfrom(qsub_cmd)
     if !success(qsub_proc)
         error("batch queue not available (could not run qsub)")
@@ -25,22 +23,24 @@ function launch_pbs_workers(cman::PBSManager, np::Integer, config::Dict)
         id = id[1:end-2]
     end
     println("job id is $id")
-    print("waiting for job to start");
+    print("waiting for job to start")
     io_objs = cell(np)
     configs = cell(np)
     for i=1:np
         # wait for each output stream file to get created
-        fname = "$pbsdir/JULIA.o$id-$i"
+        fname = "$(ENV["HOME"])/$jobname-$i.o$id"
         while !isfile(fname)
             print(".")
             sleep(0.5)
         end
-        # Hack to get Base to get the host:port, the Julia process has already started.
-        io_objs[i] = `tail -f $fname`
-        configs[i] = merge(config, {:job => id, :task => i})
+        cmd = `tail -f $fname`
+        cmd.detach = true
+        io_objs[i],proc = readsfrom(cmd)
+        io_objs[i].line_buffered = true
+        configs[i] = merge(config, {:job => id, :task => i, :iofile => fname, :process => proc})
     end
-
-    (:cmd, collect(zip(io_objs, configs)))
+    println("")
+    (:io_only, collect(zip(io_objs, configs)))
 end
 
 function manage_pbs_worker(id::Integer, config::Dict, op::Symbol)
@@ -49,6 +49,11 @@ function manage_pbs_worker(id::Integer, config::Dict, op::Symbol)
         task = config[:task]
         if !success(`qdel $job -t $task`)
             println("Error sending a Ctrl-C to julia worker $id on PBS (job: $job, task: $task)")
+        end
+    elseif op == :deregister
+        kill(config[:process])
+        if isfile(config[:iofile])
+            rm(config[:iofile])
         end
     end
 end
