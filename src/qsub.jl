@@ -47,7 +47,7 @@ function launch_qsub_workers(cman::Union(PBSManager, SGEManager), np::Integer, c
         cmd.detach = true
         io_objs[i],io_proc = readsfrom(cmd)
         io_objs[i].line_buffered = true
-        configs[i] = merge(config, {:job => id, :task => i, :iofile => fname, :process => proc})
+        configs[i] = merge(config, {:job => id, :task => i, :iofile => fname, :process => io_proc})
     end
     println("")
     (:io_only, collect(zip(io_objs, configs)))
