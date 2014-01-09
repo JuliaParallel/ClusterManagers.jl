@@ -1,4 +1,4 @@
-# Hacked from the PBS/SGE managers
+# ClusterManager for HTCondor
 
 export HTCManager, addprocs_htc
 
@@ -9,63 +9,67 @@ immutable HTCManager <: ClusterManager
     HTCManager() = new(launch_htc_workers, manage_htc_worker)
 end
 
-function launch_htc_workers(cman::HTCManager, np::Integer, config::Dict)
+function condor_script(portnum::Integer, np::Integer, config::Dict)
     exehome = config[:dir]
     exename = config[:exename]
     exeflags = config[:exeflags]
     home = ENV["HOME"]
-
+    hostname = ENV["HOSTNAME"]
     jobname = "julia-$(getpid())"
+    tdir = "$home/.julia-htc"
+    run(`mkdir -p $tdir`)
 
-    # Write condor submission script
-    subf = open("$home/$jobname.sub", "w")
-    println(subf, "executable = $exehome/$exename")
-    println(subf, "arguments = --worker")
+    scriptf = open("$tdir/$jobname.sh", "w")
+    println(scriptf, "#!/bin/sh")
+    println(scriptf, "source /share/cs-instructional/cs5220/vars.sh")
+    println(scriptf, "$exehome/$exename --worker | /usr/bin/telnet $hostname $portnum")
+    close(scriptf)
+
+    subf = open("$tdir/$jobname.sub", "w")
+    println(subf, "executable = /bin/bash")
+    println(subf, "arguments = ./$jobname.sh")
     println(subf, "universe = vanilla")
+    println(subf, "should_transfer_files = yes")
+    println(subf, "transfer_input_files = $tdir/$jobname.sh")
+    println(subf, "Notification = Error")
     for i = 1:np
-        println(subf, "output = $home/$jobname-$i.o")
-        println(subf, "error= $home/$jobname-$i.e")
+        println(subf, "output = $tdir/$jobname-$i.o")
+        println(subf, "error= $tdir/$jobname-$i.e")
         println(subf, "queue")
     end
     close(subf)
 
-    qsub_cmd = `condor_submit $home/$jobname.sub`
-    out,qsub_proc = readsfrom(qsub_cmd)
-    if !success(qsub_proc)
-        error("batch queue not available (could not run qsub)")
+    "$tdir/$jobname.sub"
+end
+
+function launch_htc_workers(cman::HTCManager, np::Integer, config::Dict)
+    portnum = rand(8000:9000)
+    server = listen(portnum)
+
+    script = condor_script(portnum, np, config) 
+    out,proc = readsfrom(`condor_submit $script`)
+    if !success(proc)
+        error("batch queue not available (could not run condor_submit)")
     end
-    id = chomp(split(readline(out),'.')[1])
-    if endswith(id, "[]")
-        id = id[1:end-2]
-    end
-    filename(i) = "$home/$jobname-$i.o"
-    print("job id is $id, waiting for job to start ")
+    print(readline(out))
+    print("Waiting for $np workers: ")
+
     io_objs = cell(np)
     configs = cell(np)
     for i=1:np
-        # wait for each output stream file to get created
-        fname = filename(i)
-        while !isfile(fname)
-            print(".")
-            sleep(1.0)
-        end
-        # Hack to get Base to get the host:port, the Julia process has already started.
-        cmd = `tail -f $fname`
-        cmd.detach = true
-        io_objs[i],io_proc = readsfrom(cmd)
-        io_objs[i].line_buffered = true
-        configs[i] = merge(config, {:job => id, :task => i, :iofile => fname, :process => io_proc})
+         conn = accept(server)
+         io_objs[i] = conn
+         configs[i] = merge(config, {:conn => conn})
+         print("$i ")
     end
-    println("")
+    println(".")
+
     (:io_only, collect(zip(io_objs, configs)))
 end
 
 function manage_htc_worker(id::Integer, config::Dict, op::Symbol)
     if op == :finalize
-        kill(config[:process])
-        if isfile(config[:iofile])
-            rm(config[:iofile])
-        end
+        close(config[:conn])
 #     elseif op == :interrupt
 #         job = config[:job]
 #         task = config[:task]
