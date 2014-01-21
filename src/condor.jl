@@ -21,7 +21,7 @@ function condor_script(portnum::Integer, np::Integer, config::Dict)
 
     scriptf = open("$tdir/$jobname.sh", "w")
     println(scriptf, "#!/bin/sh")
-    println(scriptf, "source /share/cs-instructional/cs5220/vars.sh")
+    println(scriptf, "source /share/cs-instructional/cs5220/script/vars.sh")
     println(scriptf, "$exehome/$exename --worker | /usr/bin/telnet $hostname $portnum")
     close(scriptf)
 
@@ -59,7 +59,7 @@ function launch_htc_workers(cman::HTCManager, np::Integer, config::Dict)
     for i=1:np
          conn = accept(server)
          io_objs[i] = conn
-         configs[i] = merge(config, {:conn => conn})
+         configs[i] = merge(config, {:conn => conn, :server => server})
          print("$i ")
     end
     println(".")
