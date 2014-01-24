@@ -21,7 +21,6 @@ function condor_script(portnum::Integer, np::Integer, config::Dict)
 
     scriptf = open("$tdir/$jobname.sh", "w")
     println(scriptf, "#!/bin/sh")
-    println(scriptf, "source /share/cs-instructional/cs5220/script/vars.sh")
     println(scriptf, "$exehome/$exename --worker | /usr/bin/telnet $hostname $portnum")
     close(scriptf)
 
