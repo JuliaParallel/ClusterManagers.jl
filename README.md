@@ -4,6 +4,7 @@ Currently support exists for :
 
 - Sun Grid Engine
 - Scyld
+- HTCondor
 
 ### To write a custom cluster manager:
 

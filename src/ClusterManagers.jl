@@ -4,5 +4,6 @@ module ClusterManagers
 # a different solution will have to be found
 include("qsub.jl")
 include("scyld.jl")
+include("condor.jl")
 
 end
