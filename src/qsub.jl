@@ -18,11 +18,11 @@ function launch_qsub_workers(cman::Union(PBSManager, SGEManager), np::Integer, c
     exehome = config[:dir]
     exename = config[:exename]
     exeflags = config[:exeflags]
-    home = ENV["HOME"]
+    home = pwd() 
     isPBS = isa(cman, PBSManager)
 
     jobname = "julia-$(getpid())"
-    qsub_cmd = `echo $exehome/$exename $exeflags` |> (isPBS ? `qsub -N $jobname -j oe -k o -t 1-$np` : `qsub -N $jobname -terse -j y -t 1-$np`)
+    qsub_cmd = `echo $exehome/$exename $exeflags` |> (isPBS ? `qsub -N $jobname -j oe -k o -t 1-$np` : `qsub -cwd -N $jobname -terse -j y -t 1-$np`)
     out,qsub_proc = readsfrom(qsub_cmd)
     if !success(qsub_proc)
         error("batch queue not available (could not run qsub)")
