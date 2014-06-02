@@ -46,7 +46,7 @@ function launch_htc_workers(cman::HTCManager, np::Integer, config::Dict)
     server = listen(portnum)
 
     script = condor_script(portnum, np, config) 
-    out,proc = readsfrom(`condor_submit $script`)
+    out,proc = open(`condor_submit $script`)
     if !success(proc)
         error("batch queue not available (could not run condor_submit)")
     end

@@ -23,7 +23,7 @@ function launch_qsub_workers(cman::Union(PBSManager, SGEManager), np::Integer, c
 
     jobname = "julia-$(getpid())"
     qsub_cmd = `echo "cd $(pwd()) && $exehome/$exename $exeflags"` |> (isPBS ? `qsub -N $jobname -j oe -k o -t 1-$np` : `qsub -N $jobname -terse -j y -t 1-$np`)
-    out,qsub_proc = readsfrom(qsub_cmd)
+    out,qsub_proc = open(qsub_cmd)
     if !success(qsub_proc)
         error("batch queue not available (could not run qsub)")
     end
@@ -45,7 +45,7 @@ function launch_qsub_workers(cman::Union(PBSManager, SGEManager), np::Integer, c
         # Hack to get Base to get the host:port, the Julia process has already started.
         cmd = `tail -f $fname`
         cmd.detach = true
-        io_objs[i],io_proc = readsfrom(cmd)
+        io_objs[i],io_proc = open(cmd)
         io_objs[i].line_buffered = true
         configs[i] = merge(config, {:job => id, :task => i, :iofile => fname, :process => io_proc})
     end

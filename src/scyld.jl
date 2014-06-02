@@ -13,7 +13,7 @@ function launch_scyld_workers(cman::ScyldManager, np::Integer, config::Dict)
     exeflags = config[:exeflags]
     
     beomap_cmd = `bpsh -1 beomap --no-local --np $np`
-    out,beomap_proc = readsfrom(beomap_cmd)
+    out,beomap_proc = open(beomap_cmd)
     wait(beomap_proc)
     if !success(beomap_proc)
         error("node availability inaccessible (could not run beomap)")
@@ -25,7 +25,7 @@ function launch_scyld_workers(cman::ScyldManager, np::Integer, config::Dict)
         cmd = `bpsh $node sh -l -c "cd $home && $(exename) $(exeflags)"`
         cmd.detach = true
         configs[i] = merge(config, {:node => node})
-        io_objs[i],_ = readsfrom(cmd)
+        io_objs[i],_ = open(cmd)
         io_objs[i].line_buffered = true
     end
     (:io_only, collect(zip(io_objs, configs)))
