@@ -8,52 +8,73 @@ Currently support exists for :
 
 ### To write a custom cluster manager:
 
-- Extend ClusterManager and expose ```launch``` and ```manage```
+The ``ClusterManager`` interface provides a
+way to specify a means to launch and manage worker processes. 
 
-    ```
-        immutable ScyldManager <: ClusterManager
-            launch::Function
-            manage::Function
+Thus, a custom cluster manager would need to :
 
-            ScyldManager() = new(launch_scyld_workers, manage_scyld_worker)
-        end
-    ```
+- be a subtype of the abstract ``ClusterManager``
+- implement ``launch``, a method responsible for launching new workers
+- implement ``manage``, which is called at various events during a worker's lifetime
 
-- Implement the callbacks
-    ```
-            function launch_scyld_workers(cman::ScyldManager, np::Integer, config::Dict)
-                ...
-            end
+As an example let us see how ScyldManager, the manager responsible for 
+starting workers on the same host, is implemented::
 
-            function manage_scyld_worker(id::Integer, config::Dict, op::Symbol)
-                ...
-            end
-    ```
+    immutable ScyldManager <: ClusterManager
+    end
 
-    ``config`` parameter in the callback is a Dict with the following keys - :dir, :exename, :exeflags, :tunnel, :sshflags
+    function launch(manager::ScyldManager, np::Integer, config::Dict, resp_arr::Array, c::Condition)
+        ...
+    end
 
-    The callback can use these fields to launch the instances appropriately.
+    function manage(manager::ScyldManager, id::Integer, config::Dict, op::Symbol)
+        ...
+    end
 
-    The callback should return a Tuple consisting of the response type and an array of tuples containing instance information and configuration
-
-    i.e. one of
-
-    - ```(:io_only, [(io1, config1), (io2, config2), ...])```
     
-    - ```(:io_host, [(io1, host1, config1), (io2, host2, config2), ...])```
-    
-    - ```(:io_host_port, [(io1, host1, port1, config1), (io2, host2, port2, config2), ...])```
-    
-    - ```(:host_port, [(host1, port1, config1), (host2, port2, config2), ...])```
-    
-    - ```(:cmd, [(cmd1, config1), (cmd2, config2), ...])```
+The ``launch`` method takes the following arguments:
+    ``manager::ScyldManager`` - used to dispatch the call to the appropriate implementation 
+    ``np::Integer`` - number of workers to be launched 
+    ``config::Dict`` - all the keyword arguments provided as part of the ``addprocs`` call 
+    ``resp_arr::Array`` - the array to append one or more worker information tuples too 
+    ``c::Condition`` - the condition variable to be notified as and when workers are launched.
+                       
+The ``launch`` method is called asynchronously in a separate task. The termination of this task 
+signals that all requested workers have been launched. Hence the ``launch`` function MUST exit as soon 
+as all the requested workers have been launched.
 
-    ```io``` above is an IO object wrapping of STDOUT of the launched worker process. 
-   
-    ```config``` is a dictionary containing the configuration of the worker process.
+Arrays of worker information tuples that are appended to ``resp_arr`` can take any one of 
+the following forms::
 
-    ```cmd``` is a command object to be executed, which will launch the julia worker process.
+    (io::IO, config::Dict)
     
-    ```host``` and ```port``` can be specified to override the host/port of the worker process 
-    bound to. For example, when the launched worker is behind a NATed firewall.
+    (io::IO, host::String, config::Dict)
     
+    (io::IO, host::String, port::Integer, config::Dict)
+    
+    (host::String, port::Integer, config::Dict)
+
+where:
+
+    - ``io::IO`` is the output stream of the worker.
+    - ``host::String`` and ``port::Integer`` are the host:port to connect to. If not provided
+      they are read from the ``io`` stream provided.
+    - ``config::Dict`` is the configuration dictionary for the worker. The ``launch``
+      function can add/modify any data that may be required for managing 
+      the worker.
+      
+
+The ``manage`` method takes the following arguments:
+    ``manager::ClusterManager`` - used to dispatch the call to the appropriate implementation 
+    ``id::Integer`` - The julia process id
+    ``config::Dict`` - configuration dictionary for the worker. The data may have been modified 
+                       by the ``launch`` method
+    ``op::Symbol`` - The ``manage`` method is called at different times during the worker's lifetime.
+                    ``op`` is one of ``:register``, ``:deregister``, ``:interrupt`` or ``:finalize``
+                    ``manage`` is called with ``:register`` and ``:deregister`` when a worker is 
+                    added / removed from the julia worker pool. With ``:interrupt`` when 
+                    ``interrupt(workers)`` is called. The cluster manager should signal the appropriate 
+                    worker with an interrupt signal. With ``:finalize`` for cleanup purposes.
+                    
+
+                    
