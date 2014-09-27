@@ -49,8 +49,9 @@ signals that all requested workers have been launched. Hence the ``launch`` func
 as all the requested workers have been launched.
 
 Arrays of worker information tuples that are appended to ``resp_arr`` can take any one of 
-the following forms::
+the following forms:
 
+```
     (io::IO, config::Dict)
     
     (io::IO, host::String, config::Dict)
@@ -58,33 +59,32 @@ the following forms::
     (io::IO, host::String, port::Integer, config::Dict)
     
     (host::String, port::Integer, config::Dict)
+```
 
 where:
 
-    - ``io::IO`` is the output stream of the worker.
-    
-    - ``host::String`` and ``port::Integer`` are the host:port to connect to. If not provided
-      they are read from the ``io`` stream provided.
-      
-    - ``config::Dict`` is the configuration dictionary for the worker. The ``launch``
-      function can add/modify any data that may be required for managing 
-      the worker.
-      
+- ``io::IO`` is the output stream of the worker.
+
+- ``host::String`` and ``port::Integer`` are the host:port to connect to. If not provided
+  they are read from the ``io`` stream provided.
+  
+- ``config::Dict`` is the configuration dictionary for the worker. The ``launch``
+  function can add/modify any data that may be required for managing 
+  the worker.
+  
 
 The ``manage`` method takes the following arguments:
 
-    ``manager::ClusterManager`` - used to dispatch the call to the appropriate implementation 
-    
-    ``id::Integer`` - The julia process id
-    
-    ``config::Dict`` - configuration dictionary for the worker. The data may have been modified 
-                       by the ``launch`` method
-                       
-    ``op::Symbol`` - The ``manage`` method is called at different times during the worker's lifetime.
-                    ``op`` is one of ``:register``, ``:deregister``, ``:interrupt`` or ``:finalize``
-                    ``manage`` is called with ``:register`` and ``:deregister`` when a worker is 
-                    added / removed from the julia worker pool. With ``:interrupt`` when 
-                    ``interrupt(workers)`` is called. The cluster manager should signal the appropriate 
-                    worker with an interrupt signal. With ``:finalize`` for cleanup purposes.
-                    
+- ``manager::ClusterManager`` - used to dispatch the call to the appropriate implementation
 
+- ``id::Integer`` - The julia process id
+
+- ``config::Dict`` - configuration dictionary for the worker. The data may have been modified 
+                   by the ``launch`` method
+               
+- ``op::Symbol`` - The ``manage`` method is called at different times during the worker's lifetime.
+                ``op`` is one of ``:register``, ``:deregister``, ``:interrupt`` or ``:finalize``
+                ``manage`` is called with ``:register`` and ``:deregister`` when a worker is 
+                added / removed from the julia worker pool. With ``:interrupt`` when 
+                ``interrupt(workers)`` is called. The cluster manager should signal the appropriate 
+                worker with an interrupt signal. With ``:finalize`` for cleanup purposes.
