@@ -17,8 +17,7 @@ Thus, a custom cluster manager would need to :
 - implement ``launch``, a method responsible for launching new workers
 - implement ``manage``, which is called at various events during a worker's lifetime
 
-As an example let us see how ScyldManager, the manager responsible for 
-starting workers on the same host, is implemented::
+As an example let us see how ScyldManager is implemented:
 
     immutable ScyldManager <: ClusterManager
     end
@@ -33,11 +32,17 @@ starting workers on the same host, is implemented::
 
     
 The ``launch`` method takes the following arguments:
+
     ``manager::ScyldManager`` - used to dispatch the call to the appropriate implementation 
-    ``np::Integer`` - number of workers to be launched 
-    ``config::Dict`` - all the keyword arguments provided as part of the ``addprocs`` call 
-    ``resp_arr::Array`` - the array to append one or more worker information tuples too 
-    ``c::Condition`` - the condition variable to be notified as and when workers are launched.
+    
+    ``np::Integer`` - number of workers to be launched
+    
+    ``config::Dict`` - all the keyword arguments provided as part of the ``addprocs`` call
+    
+    ``resp_arr::Array`` - the array to append one or more worker information tuples to
+    
+    ``c::Condition`` - the condition variable to be notified as and when workers are launched
+    
                        
 The ``launch`` method is called asynchronously in a separate task. The termination of this task 
 signals that all requested workers have been launched. Hence the ``launch`` function MUST exit as soon 
@@ -57,18 +62,24 @@ the following forms::
 where:
 
     - ``io::IO`` is the output stream of the worker.
+    
     - ``host::String`` and ``port::Integer`` are the host:port to connect to. If not provided
       they are read from the ``io`` stream provided.
+      
     - ``config::Dict`` is the configuration dictionary for the worker. The ``launch``
       function can add/modify any data that may be required for managing 
       the worker.
       
 
 The ``manage`` method takes the following arguments:
+
     ``manager::ClusterManager`` - used to dispatch the call to the appropriate implementation 
+    
     ``id::Integer`` - The julia process id
+    
     ``config::Dict`` - configuration dictionary for the worker. The data may have been modified 
                        by the ``launch`` method
+                       
     ``op::Symbol`` - The ``manage`` method is called at different times during the worker's lifetime.
                     ``op`` is one of ``:register``, ``:deregister``, ``:interrupt`` or ``:finalize``
                     ``manage`` is called with ``:register`` and ``:deregister`` when a worker is 
@@ -77,4 +88,3 @@ The ``manage`` method takes the following arguments:
                     worker with an interrupt signal. With ``:finalize`` for cleanup purposes.
                     
 
-                    
