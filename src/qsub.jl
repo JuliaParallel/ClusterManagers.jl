@@ -18,7 +18,7 @@ function launch(manager::Union(PBSManager, SGEManager), np::Integer, config::Dic
         if manager.queue == ""
             queue = ""
         else
-            queue = "-j " * manager.queue
+            queue = "-q " * manager.queue
         end
 
         jobname = "julia-$(getpid())"
