@@ -1,9 +1,11 @@
 export PBSManager, SGEManager, addprocs_pbs, addprocs_sge
 
 immutable PBSManager <: ClusterManager
+    queue::String
 end
 
 immutable SGEManager <: ClusterManager
+    queue::String
 end
 
 function launch(manager::Union(PBSManager, SGEManager), np::Integer, config::Dict, instances_arr::Array, c::Condition)
@@ -13,9 +15,14 @@ function launch(manager::Union(PBSManager, SGEManager), np::Integer, config::Dic
         exeflags = config[:exeflags]
         home = ENV["HOME"]
         isPBS = isa(manager, PBSManager)
+        if manager.queue == ""
+            queue = ""
+        else
+            queue = "-q " * manager.queue
+        end
 
         jobname = "julia-$(getpid())"
-        qsub_cmd = `echo "cd $(pwd()) && $exehome/$exename $exeflags"` |> (isPBS ? `qsub -N $jobname -j oe -k o -t 1-$np` : `qsub -N $jobname -terse -j y -t 1-$np`)
+        qsub_cmd = `echo "cd $(pwd()) && $exehome/$exename $exeflags"` |> (isPBS ? `qsub -N $jobname $queue -j oe -k o -t 1-$np` : `qsub -N $jobname $queue -terse -j y -t 1-$np`)
         out,qsub_proc = open(qsub_cmd)
         if !success(qsub_proc)
             println("batch queue not available (could not run qsub)")
@@ -69,5 +76,5 @@ function manage(manager::Union(PBSManager, SGEManager), id::Integer, config::Dic
     end
 end
 
-addprocs_pbs(np::Integer) = addprocs(np, manager=PBSManager())
-addprocs_sge(np::Integer) = addprocs(np, manager=SGEManager())
+addprocs_pbs(np::Integer, queue="") = addprocs(np, manager=PBSManager(queue))
+addprocs_sge(np::Integer, queue="") = addprocs(np, manager=SGEManager(queue))
