@@ -3,12 +3,13 @@
 export HTCManager, addprocs_htc
 
 immutable HTCManager <: ClusterManager
+    np::Integer
 end
 
-function condor_script(portnum::Integer, np::Integer, config::Dict)
-    exehome = config[:dir]
-    exename = config[:exename]
-    exeflags = config[:exeflags]
+function condor_script(portnum::Integer, np::Integer, params::Dict)
+    exehome = params[:dir]
+    exename = params[:exename]
+    exeflags = params[:exeflags]
     home = ENV["HOME"]
     hostname = ENV["HOSTNAME"]
     jobname = "julia-$(getpid())"
@@ -37,12 +38,13 @@ function condor_script(portnum::Integer, np::Integer, config::Dict)
     "$tdir/$jobname.sub"
 end
 
-function launch(manager::HTCManager, np::Integer, config::Dict, instances_arr::Array, c::Condition)
-    try 
+function launch(manager::HTCManager, params::Dict, instances_arr::Array, c::Condition)
+    try
         portnum = rand(8000:9000)
         server = listen(portnum)
+        np = manager.np
 
-        script = condor_script(portnum, np, config) 
+        script = condor_script(portnum, np, params)
         out,proc = open(`condor_submit $script`)
         if !success(proc)
             println("batch queue not available (could not run condor_submit)")
@@ -51,27 +53,29 @@ function launch(manager::HTCManager, np::Integer, config::Dict, instances_arr::A
         print(readline(out))
         print("Waiting for $np workers: ")
 
-        io_objs = cell(np)
-        configs = cell(np)
         for i=1:np
             conn = accept(server)
-            io_objs[i] = conn
-            configs[i] = merge(config, {:conn => conn, :server => server})
+            config = WorkerConfig()
+
+            config.io = conn
+
+            push!(instances_arr, config)
+            notify(c)
             print("$i ")
         end
         println(".")
 
-        push!(instances_arr, collect(zip(io_objs, configs)))
-        notify(c)
    catch e
         println("Error launching condor")
         println(e)
    end
 end
 
-function manage(manager::HTCManager, id::Integer, config::Dict, op::Symbol)
+function manage(manager::HTCManager, id::Integer, config::WorkerConfig, op::Symbol)
     if op == :finalize
-        close(config[:conn])
+        if !isnull(config.io)
+            close(config.io)
+        end
 #     elseif op == :interrupt
 #         job = config[:job]
 #         task = config[:task]
@@ -82,4 +86,4 @@ function manage(manager::HTCManager, id::Integer, config::Dict, op::Symbol)
     end
 end
 
-addprocs_htc(np::Integer) = addprocs(np, manager=HTCManager())
+addprocs_htc(np::Integer) = addprocs(HTCManager(np))
