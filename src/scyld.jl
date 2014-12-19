@@ -1,13 +1,15 @@
 export addprocs_scyld, ScyldManager
 
 immutable ScyldManager <: ClusterManager
+    np::Integer
 end
 
-function launch(manager::ScyldManager, np::Integer, config::Dict, instances_arr::Array, c::Condition)
-    try 
-        home = config[:dir]
-        exename = config[:exename]
-        exeflags = config[:exeflags]
+function launch(manager::ScyldManager, params::Dict, instances_arr::Array, c::Condition)
+    try
+        home = params[:dir]
+        exename = params[:exename]
+        exeflags = params[:exeflags]
+        np = manager.np
 
         beomap_cmd = `bpsh -1 beomap --no-local --np $np`
         out,beomap_proc = open(beomap_cmd)
@@ -16,38 +18,37 @@ function launch(manager::ScyldManager, np::Integer, config::Dict, instances_arr:
             error("node availability inaccessible (could not run beomap)")
         end
         nodes = split(chomp(readline(out)),':')
-        io_objs = cell(np)
-        configs = cell(np)
         for (i,node) in enumerate(nodes)
-            cmd = `bpsh $node sh -l -c "cd $home && $(exename) $(exeflags)"`
+            cmd = `bpsh $node sh -l -c "cd $home && $(exename) $(exeflags) --worker"`
             cmd.detach = true
-            configs[i] = merge(config, {:node => node})
-            io_objs[i],_ = open(cmd)
-            io_objs[i].line_buffered = true
+            config = WorkerConfig()
+
+            config.io,_ = open(cmd)
+            config.io.line_buffered = true
+            config.userdata = Dict{Symbol, Any}()
+            config.userdata[:node] = node
+
+            push!(instances_arr, config)
+            notify(c)
         end
-        
-        push!(instances_arr, collect(zip(io_objs, configs)))
-        notify(c)
    catch e
         println("Error launching beomap")
         println(e)
    end
 end
 
-function manage(manager::ScyldManager, id::Integer, config::Dict, op::Symbol)
+function manage(manager::ScyldManager, id::Integer, config::WorkerConfig, op::Symbol)
     if op == :interrupt
-        if haskey(config, :ospid)
-            node = config[:node]
-            if !success(`bpsh $node kill -2 $(config[:ospid])`)
+        if !isnull(config.ospid)
+            node = config.userdata[:node]
+            if !success(`bpsh $node kill -2 $(get(config.ospid))`)
                 println("Error sending Ctrl-C to julia worker $id on node $node")
             end
         else
             # This state can happen immediately after an addprocs
             println("Worker $id cannot be presently interrupted.")
         end
-    elseif op == :register
-        config[:ospid] = remotecall_fetch(id, getpid)
     end
 end
 
-addprocs_scyld(np::Integer) = addprocs(np, manager=ScyldManager()) 
+addprocs_scyld(np::Integer) = addprocs(ScyldManager(np))
