@@ -7,7 +7,7 @@ immutable HTCManager <: ClusterManager
 end
 
 function condor_script(portnum::Integer, np::Integer, params::Dict)
-    exehome = params[:dir]
+    dir = params[:dir]
     exename = params[:exename]
     exeflags = params[:exeflags]
     home = ENV["HOME"]
@@ -18,7 +18,8 @@ function condor_script(portnum::Integer, np::Integer, params::Dict)
 
     scriptf = open("$tdir/$jobname.sh", "w")
     println(scriptf, "#!/bin/sh")
-    println(scriptf, "$exehome/$exename --worker | /usr/bin/telnet $hostname $portnum")
+    println(scriptf, "cd $(Base.shell_escape(dir))")
+    println(scriptf, "$(Base.shell_escape(exename)) --worker | /usr/bin/telnet $(Base.shell_escape(hostname)) $portnum")
     close(scriptf)
 
     subf = open("$tdir/$jobname.sub", "w")
