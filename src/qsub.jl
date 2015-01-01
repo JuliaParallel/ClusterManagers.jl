@@ -13,7 +13,7 @@ end
 
 function launch(manager::Union(PBSManager, SGEManager), params::Dict, instances_arr::Array, c::Condition)
     try
-        exehome = params[:dir]
+        dir = params[:dir]
         exename = params[:exename]
         exeflags = params[:exeflags]
         home = ENV["HOME"]
@@ -26,7 +26,8 @@ function launch(manager::Union(PBSManager, SGEManager), params::Dict, instances_
         np = manager.np
 
         jobname = "julia-$(getpid())"
-        qsub_cmd = `echo "cd $(pwd()) && $exehome/$exename $exeflags"` |> (isPBS ? `qsub -N $jobname $queue -j oe -k o -t 1-$np` : `qsub -N $jobname $queue -terse -j y -t 1-$np`)
+        cmd = `cd $dir && $exename $exeflags`
+        qsub_cmd = `echo $(Base.shell_escape(cmd))` |> (isPBS ? `qsub -N $jobname $queue -j oe -k o -t 1-$np` : `qsub -N $jobname $queue -terse -j y -t 1-$np`)
         out,qsub_proc = open(qsub_cmd)
         if !success(qsub_proc)
             println("batch queue not available (could not run qsub)")

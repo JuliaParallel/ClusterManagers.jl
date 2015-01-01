@@ -6,7 +6,7 @@ end
 
 function launch(manager::ScyldManager, params::Dict, instances_arr::Array, c::Condition)
     try
-        home = params[:dir]
+        dir = params[:dir]
         exename = params[:exename]
         exeflags = params[:exeflags]
         np = manager.np
@@ -19,7 +19,8 @@ function launch(manager::ScyldManager, params::Dict, instances_arr::Array, c::Co
         end
         nodes = split(chomp(readline(out)),':')
         for (i,node) in enumerate(nodes)
-            cmd = `bpsh $node sh -l -c "cd $home && $(exename) $(exeflags) --worker"`
+            cmd = `cd $dir && $exename $exeflags --worker`
+            cmd = `bpsh $node sh -l -c $(Base.shell_escape(cmd))`
             cmd.detach = true
             config = WorkerConfig()
 
