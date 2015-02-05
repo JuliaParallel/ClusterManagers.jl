@@ -8,5 +8,6 @@ export launch, manage
 include("qsub.jl")
 include("scyld.jl")
 include("condor.jl")
+include("slurm.jl")
 
 end
