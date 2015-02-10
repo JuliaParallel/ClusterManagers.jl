@@ -20,21 +20,32 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
         for k in keys(p)
             if length(string(k)) == 1
                 push!(srunargs, "-$k")
-                push!(srunargs, "$(p[k])")
+                val = p[k]
+                if length(val) > 0
+                    push!(srunargs, "$(p[k])")
+                end
             else
-                push!(srunargs,"--$(k)=$(p[k])")
+                k2 = replace(string(k), "_", "-")
+                val = p[k]
+                if length(val) > 0
+                    push!(srunargs, "--$(k2)=$(p[k])")
+                else
+                    push!(srunargs, "--$(k2)")
+                end
             end
         end
         np = manager.np
         jobname = "julia-$(getpid())"
         srun_cmd = `srun -J $jobname -n $np -D $exehome $(srunargs) $exename $exeflags --worker`
-        srun_cmd.detach = true
-        out, _ = open(srun_cmd)
+        out, srun_proc = open(srun_cmd)
         for i = 1:np
             w = split(split(readline(out), ":")[2], "#")
             config = WorkerConfig()
             config.port = int(w[1])
             config.host = strip(w[2])
+            # Keep a reference to the proc, so it's properly closed once
+            # the last worker exits.
+            config.userdata = srun_proc
             push!(instances_arr, config)
             notify(c)
         end

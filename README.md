@@ -20,8 +20,16 @@ See section http://docs.julialang.org/en/latest/manual/parallel-computing/#clust
 using ClusterManagers
 
 # Arguments to the Slurm srun(1) command can be given as keyword
-# arguments to addprocs. Both short and long form arguments are
-# supported.
+# arguments to addprocs.  The argument name and value is translated to
+# a srun(1) command line argument as follows:
+# 1) If the length of the argument is 1 => "-arg value",
+#    e.g. t="0:1:0" => "-t 0:1:0"
+# 2) If the length of the argument is > 1 => "--arg=value"
+#    e.g. time="0:1:0" => "--time=0:1:0"
+# 3) If the value is the empty string, it becomes a flag value,
+#    e.g. exclusive="" => "--exclusive"
+# 4) If the argument contains "_", they are replaced with "-",
+#    e.g. mem_per_cpu=100 => "--mem-per-cpu=100"
 addprocs(SlurmManager(2), partition="debug", t="00:5:00")
 
 hosts = []
