@@ -40,9 +40,9 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
         jobname = "julia-$(getpid())"
         srun_cmd = `srun -J $jobname -n $np -o "job%3t.out" -D $exehome $(srunargs) $exename $exeflags --worker`
         out, srun_proc = open(srun_cmd)
-        local w
         for i = 0:np - 1
             print("connecting to worker $(i + 1) out of $np\r")
+            local w
             fn = "$exehome/job$(lpad(i, 3, "0")).out"
             t0 = time()
             while true
@@ -51,22 +51,9 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
                     break
                 end
                 sleep(0.001)
-                if isfile(fn)
-                    t0 = time()
-                    while true
-                        if time() > t0 + 60 + np
-                            warn("dropping worker: file created, but not written to in $(60 + np) seconds")
-                            break
-                        end
-                        w = open(fn) do f
-                            rf = readline(f)
-                            if ismatch(r"\n", rf)
-                                return split(split(rf, ":")[2], "#")
-                            end
-                            return ""
-                        end
-                        length(w) > 0 && break
-                        sleep(0.001)
+                if isfile(fn) && filesize(fn) > 0
+                    w = open(fn) do f
+                        return split(split(readline(f), ":")[2], "#")
                     end
                     break
                 end
