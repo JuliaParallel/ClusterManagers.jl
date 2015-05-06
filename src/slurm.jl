@@ -35,15 +35,17 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
             end
         end
 
-        # rm("job*.out")
+        # cleanup old files
+        map(rm, filter(t -> ismatch(r"job.*\.out", t), readdir(exehome)))
+
         np = manager.np
         jobname = "julia-$(getpid())"
-        srun_cmd = `srun -J $jobname -n $np -o "job%3t.out" -D $exehome $(srunargs) $exename $exeflags --worker`
+        srun_cmd = `srun -J $jobname -n $np -o "job%4t.out" -D $exehome $(srunargs) $exename $exeflags --worker`
         out, srun_proc = open(srun_cmd)
         for i = 0:np - 1
             print("connecting to worker $(i + 1) out of $np\r")
             local w
-            fn = "$exehome/job$(lpad(i, 3, "0")).out"
+            fn = "$exehome/job$(lpad(i, 4, "0")).out"
             t0 = time()
             while true
                 if time() > t0 + 60 + np
@@ -58,7 +60,6 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
                     break
                 end
             end
-            isfile(fn) && rm(fn)
             if length(w) > 0
                 config = WorkerConfig()
                 config.port = parse(Int, w[1])
