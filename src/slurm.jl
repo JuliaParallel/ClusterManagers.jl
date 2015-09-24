@@ -16,6 +16,7 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
         p = delete!(p, :dir)
         p = delete!(p, :exename)
         p = delete!(p, :exeflags)
+        p = delete!(p, :topology)
         srunargs = []
         for k in keys(p)
             if length(string(k)) == 1
@@ -44,7 +45,7 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
         out, srun_proc = open(srun_cmd)
         for i = 0:np - 1
             print("connecting to worker $(i + 1) out of $np\r")
-            local w
+            local w=[]
             fn = "$exehome/job$(lpad(i, 4, "0")).out"
             t0 = time()
             while true
