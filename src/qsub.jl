@@ -2,16 +2,16 @@ export PBSManager, SGEManager, addprocs_pbs, addprocs_sge
 
 immutable PBSManager <: ClusterManager
     np::Integer
-    queue::String
+    queue::AbstractString
 end
 
 immutable SGEManager <: ClusterManager
     np::Integer
-    queue::String
+    queue::AbstractString
 end
 
 
-function launch(manager::Union(PBSManager, SGEManager), params::Dict, instances_arr::Array, c::Condition)
+function launch(manager::Union{PBSManager, SGEManager}, params::Dict, instances_arr::Array, c::Condition)
     try
         dir = params[:dir]
         exename = params[:exename]
@@ -67,7 +67,7 @@ function launch(manager::Union(PBSManager, SGEManager), params::Dict, instances_
     end
 end
 
-function manage(manager::Union(PBSManager, SGEManager), id::Integer, config::WorkerConfig, op::Symbol)
+function manage(manager::Union{PBSManager, SGEManager}, id::Integer, config::WorkerConfig, op::Symbol)
     if op == :finalize
         kill(config.userdata[:process])
         if isfile(config.userdata[:iofile])
