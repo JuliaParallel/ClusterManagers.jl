@@ -70,7 +70,7 @@ function launch(manager::Union{PBSManager, SGEManager}, params::Dict, instances_
 end
 
 function manage(manager::Union{PBSManager, SGEManager}, id::Integer, config::WorkerConfig, op::Symbol)
-    if op == :finalize
+    if op == :interrupt
         kill(config.userdata[:process])
         if isfile(config.userdata[:iofile])
             rm(config.userdata[:iofile])
