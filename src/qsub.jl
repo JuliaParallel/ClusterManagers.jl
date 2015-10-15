@@ -21,17 +21,23 @@ function launch(manager::Union{PBSManager, SGEManager}, params::Dict, instances_
         if manager.queue == ""
             queue = ""
         else
-            queue = "-q " * manager.queue
+            queue = ["-q" manager.queue]
         end
+        
+        enviromentVars = params[:enviromentVars]
+        if enviromentVars == ""
+            eVars = ""
+        else
+            eVars = ["-v" enviromentVars]
+        end
+        
         np = manager.np
 
         jobname = "julia-$(getpid())"
-
-        qsub_options = length(queue) > 0 ? [jobname queue] : jobname
-    
         cmd = `cd $dir && $exename $exeflags --worker`
-        qsub_cmd = `echo $(Base.shell_escape(cmd))` |> (isPBS ? `qsub -N $jobname $queue -j oe -k o -t 1-$np` : `qsub -N $qsub_options -terse -j y -t 1-$np`)
+        qsub_cmd = pipeline(`echo $(Base.shell_escape(cmd))` , (isPBS ? `qsub -N $jobname -j oe -k o -t 1-$np $queue $eVars` : `qsub -N $jobname -terse -j y -t 1-$np $queue $eVars`))
         out,qsub_proc = open(qsub_cmd)
+        
         if !success(qsub_proc)
             println("batch queue not available (could not run qsub)")
             return
@@ -50,13 +56,11 @@ function launch(manager::Union{PBSManager, SGEManager}, params::Dict, instances_
                 sleep(1.0)
             end
             # Hack to get Base to get the host:port, the Julia process has already started.
-            cmd = Cmd(`tail -f $fname`,false,true, nothing, "")
-            #cmd.detach = true
+            cmd = `tail -f $fname`
 
             config = WorkerConfig()
 
-            config.io, io_proc = open(cmd)
-            #config.line_buffered = true
+            config.io, io_proc = open(detach(cmd))
 
             config.userdata = Dict{Symbol, Any}(:job => id, :task => i, :iofile => fname, :process => io_proc)
             push!(instances_arr, config)
@@ -70,21 +74,22 @@ function launch(manager::Union{PBSManager, SGEManager}, params::Dict, instances_
     end
 end
 
-function manage(manager::Union{PBSManager, SGEManager}, id::Integer, config::WorkerConfig, op::Symbol)
-    if op == :finalize
-        kill(config.userdata[:process])
-        if isfile(config.userdata[:iofile])
-            rm(config.userdata[:iofile])
-        end
-#     elseif op == :interrupt
-#         job = config[:job]
-#         task = config[:task]
-#         # this does not currently work
-#         if !success(`qsig -s 2 -t $task $job`)
-#             println("Error sending a Ctrl-C to julia worker $id (job: $job, task: $task)")
-#         end
-    end
+function manage(manager::Union{PBSManager, SGEManager}, id::Int64, config::WorkerConfig, op::Symbol)
+
 end
 
-addprocs_pbs(np::Integer, queue="") = addprocs(PBSManager(np, queue))
-addprocs_sge(np::Integer, queue="") = addprocs(SGEManager(np, queue))
+function kill(manager::Union{PBSManager, SGEManager}, id::Int64, config::WorkerConfig)
+
+    remotecall(id,exit)
+    close(get(config.io))
+
+    kill(get(config.userdata)[:process],15)  
+
+    if isfile(get(config.userdata)[:iofile])
+        rm(get(config.userdata)[:iofile])
+    end
+
+end
+
+addprocs_pbs(np::Integer; queue::AbstractString="",enviroVars::AbstractString="") = addprocs(PBSManager(np, queue),enviromentVars=enviroVars)
+addprocs_sge(np::Integer; queue::AbstractString="",enviroVars::AbstractString="") = addprocs(SGEManager(np, queue),enviromentVars=enviroVars)
