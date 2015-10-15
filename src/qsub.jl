@@ -50,12 +50,11 @@ function launch(manager::Union{PBSManager, SGEManager}, params::Dict, instances_
                 sleep(1.0)
             end
             # Hack to get Base to get the host:port, the Julia process has already started.
-            cmd = Cmd(`tail -f $fname`,false,true, nothing, "")
-            #cmd.detach = true
+            cmd = `tail -f $fname`
 
             config = WorkerConfig()
 
-            config.io, io_proc = open(cmd)
+            config.io, io_proc = open(detach(cmd))
             #config.line_buffered = true
 
             config.userdata = Dict{Symbol, Any}(:job => id, :task => i, :iofile => fname, :process => io_proc)
