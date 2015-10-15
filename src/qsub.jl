@@ -27,7 +27,7 @@ function launch(manager::Union{PBSManager, SGEManager}, params::Dict, instances_
 
         jobname = "julia-$(getpid())"
         cmd = `cd $dir && $exename $exeflags`
-        qsub_cmd = `echo $(Base.shell_escape(cmd))` |> (isPBS ? `qsub -N $jobname $queue -j oe -k o -t 1-$np` : `qsub -N $jobname $queue -terse -j y -t 1-$np`)
+        qsub_cmd = pipeline(`echo $(Base.shell_escape(cmd))` , (isPBS ? `qsub -N $jobname $queue -j oe -k o -t 1-$np` : `qsub -N $jobname $queue -terse -j y -t 1-$np`))
         out,qsub_proc = open(qsub_cmd)
         if !success(qsub_proc)
             println("batch queue not available (could not run qsub)")
