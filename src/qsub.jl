@@ -26,8 +26,16 @@ function launch(manager::Union{PBSManager, SGEManager}, params::Dict, instances_
         np = manager.np
 
         jobname = "julia-$(getpid())"
+<<<<<<< HEAD
         cmd = `cd $dir && $exename $exeflags`
         qsub_cmd = pipeline(`echo $(Base.shell_escape(cmd))` , (isPBS ? `qsub -N $jobname $queue -j oe -k o -t 1-$np` : `qsub -N $jobname $queue -terse -j y -t 1-$np`))
+=======
+
+        qsub_options = length(queue) > 0 ? [jobname queue] : jobname
+    
+        cmd = `cd $dir && $exename $exeflags --worker`
+        qsub_cmd = pipeline(`echo $(Base.shell_escape(cmd))` , (isPBS ? `qsub -N $jobname $queue -j oe -k o -t 1-$np` : `qsub -N $qsub_options -terse -j y -t 1-$np`))
+>>>>>>> origin/pull-request/399bcb2d
         out,qsub_proc = open(qsub_cmd)
         if !success(qsub_proc)
             println("batch queue not available (could not run qsub)")
@@ -48,12 +56,11 @@ function launch(manager::Union{PBSManager, SGEManager}, params::Dict, instances_
             end
             # Hack to get Base to get the host:port, the Julia process has already started.
             cmd = `tail -f $fname`
-            cmd.detach = true
 
             config = WorkerConfig()
 
-            config.io, io_proc = open(cmd)
-            config.line_buffered = true
+            config.io, io_proc = open(detach(cmd))
+            #config.line_buffered = true
 
             config.userdata = Dict{Symbol, Any}(:job => id, :task => i, :iofile => fname, :process => io_proc)
             push!(instances_arr, config)
@@ -68,7 +75,7 @@ function launch(manager::Union{PBSManager, SGEManager}, params::Dict, instances_
 end
 
 function manage(manager::Union{PBSManager, SGEManager}, id::Integer, config::WorkerConfig, op::Symbol)
-    if op == :finalize
+    if op == :interrupt
         kill(config.userdata[:process])
         if isfile(config.userdata[:iofile])
             rm(config.userdata[:iofile])
