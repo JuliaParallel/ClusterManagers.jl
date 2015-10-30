@@ -80,4 +80,6 @@ describepids() 		# remote pids
 describepids(remotes=1) # local pids
 describepids(remotes=2) # all pids
 
+describepids(pids; filterfn=somefilterfn) #arbitrary selection of pids and filtering of hostnames
+
 </code></pre>
