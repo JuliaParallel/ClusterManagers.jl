@@ -9,5 +9,6 @@ include("scyld.jl")
 include("condor.jl")
 include("slurm.jl")
 include("affinity.jl")
+include("utils.jl")
 
 end
