@@ -65,3 +65,17 @@ of workers pinned to cores in increasing order, For example, worker1 => CPU0, wo
 the workers. Useful when we have multiple CPU sockets, with each socket having multiple cores. A `BALANCED` mode results in workers
 spread across CPU sockets. Default is `BALANCED`
 
+
+
+### Identifying hosts
+
+An utility is provided to identify processes on the same machine in order to facilitate creation of SharedArray objects.
+
+<pre><code>
+# retrieve a dictionary, D, where length(keys(D)) represents the number of unqiue hosts
+# keys(D) contains one process on each host 
+# D[pid] is a list of all pids on the same host as pid
+describepids() # processes on remotes
+describepids(remotes=1) #processes on local
+describepids(remotes=2) #all remotes
+</pre></code>
