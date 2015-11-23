@@ -18,19 +18,28 @@ function launch(manager::Union{PBSManager, SGEManager}, params::Dict, instances_
         exeflags = params[:exeflags]
         home = ENV["HOME"]
         isPBS = isa(manager, PBSManager)
+
         if manager.queue == ""
-            queue = ""
+            queue = ``
         else
-            queue = "-q " * manager.queue
+            thisQueue = manager.queue
+            queue = `-q $thisQueue`
         end
+        
+
+        if params[:enviromentVars] == ""
+            enviromentVars = ``
+        else
+            eVar = params[:enviromentVars]
+            enviromentVars = `-v $eVar`
+        end
+        
         np = manager.np
 
-        jobname = "julia-$(getpid())"
-
-        qsub_options = length(queue) > 0 ? [jobname queue] : jobname
-    
+        jobname = `julia-$(getpid())`
+        
         cmd = `cd $dir && $exename $exeflags --worker`
-        qsub_cmd = pipeline(`echo $(Base.shell_escape(cmd))` , (isPBS ? `qsub -N $qsub_options -j oe -k o -t 1-$np` : `qsub -N $qsub_options -terse -j y -t 1-$np`))
+        qsub_cmd = pipeline(`echo $(Base.shell_escape(cmd))` , (isPBS ? `qsub -N $jobname -j oe -k o -t 1-$np $queue $enviromentVars` : `qsub -N $jobname -terse -j y -t 1-$np $queue $enviromentVars`))
         out,qsub_proc = open(qsub_cmd)
         if !success(qsub_proc)
             println("batch queue not available (could not run qsub)")
@@ -40,7 +49,8 @@ function launch(manager::Union{PBSManager, SGEManager}, params::Dict, instances_
         if endswith(id, "[]")
             id = id[1:end-2]
         end
-        filename(i) = isPBS ? "$home/$jobname-$i.o$id" : "$home/$jobname.o$id.$i"
+
+        filename(i) = isPBS ? "$home/julia-$(getpid())-$i.o$id" : "$home/julia-$(getpid()).o$id.$i"
         print("job id is $id, waiting for job to start ")
         for i=1:np
             # wait for each output stream file to get created
@@ -85,5 +95,5 @@ function kill(manager::Union{PBSManager, SGEManager}, id::Int64, config::WorkerC
 
 end
 
-addprocs_pbs(np::Integer, queue="") = addprocs(PBSManager(np, queue))
-addprocs_sge(np::Integer, queue="") = addprocs(SGEManager(np, queue))
+addprocs_pbs(np::Integer; queue::AbstractString="",enviromentVars::AbstractString="") = addprocs(PBSManager(np, queue),enviromentVars=enviromentVars)
+addprocs_sge(np::Integer; queue::AbstractString="",enviromentVars::AbstractString="") = addprocs(SGEManager(np, queue),enviromentVars=enviromentVars)
