@@ -34,6 +34,7 @@ function launch(manager::Union{PBSManager, SGEManager}, params::Dict, instances_
         np = manager.np
 
         jobname = "julia-$(getpid())"
+
         cmd = `cd $dir && $exename $exeflags --worker`
         qsub_cmd = pipeline(`echo $(Base.shell_escape(cmd))` , (isPBS ? `qsub -N $jobname -j oe -k o -t 1-$np $queue $eVars` : `qsub -N $jobname -terse -j y -t 1-$np $queue $eVars`))
         out,qsub_proc = open(qsub_cmd)
@@ -93,3 +94,4 @@ end
 
 addprocs_pbs(np::Integer; queue::AbstractString="",enviroVars::AbstractString="") = addprocs(PBSManager(np, queue),enviromentVars=enviroVars)
 addprocs_sge(np::Integer; queue::AbstractString="",enviroVars::AbstractString="") = addprocs(SGEManager(np, queue),enviromentVars=enviroVars)
+
