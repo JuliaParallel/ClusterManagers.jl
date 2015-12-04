@@ -22,24 +22,24 @@ function launch(manager::Union{PBSManager, SGEManager}, params::Dict, instances_
         if manager.queue == ""
             queue = ``
         else
-            thisQueue = manager.queue
-            queue = `-q $thisQueue`
+            this_queue = manager.queue
+            queue = `-q $this_queue`
         end
-        
 
-        if params[:enviromentVars] == ""
-            enviromentVars = ``
+
+        if params[:qsub_env] == ""
+            qsub_env = ``
         else
-            eVar = params[:enviromentVars]
-            enviromentVars = `-v $eVar`
+            evar = params[:qsub_env]
+            qsub_env = `-v $evar`
         end
-        
+
         np = manager.np
 
         jobname = `julia-$(getpid())`
-        
+
         cmd = `cd $dir && $exename $exeflags --worker`
-        qsub_cmd = pipeline(`echo $(Base.shell_escape(cmd))` , (isPBS ? `qsub -N $jobname -j oe -k o -t 1-$np $queue $enviromentVars` : `qsub -N $jobname -terse -j y -t 1-$np $queue $enviromentVars`))
+        qsub_cmd = pipeline(`echo $(Base.shell_escape(cmd))` , (isPBS ? `qsub -N $jobname -j oe -k o -t 1-$np $queue $qsub_env` : `qsub -N $jobname -terse -j y -t 1-$np $queue $qsub_env`))
         out,qsub_proc = open(qsub_cmd)
         if !success(qsub_proc)
             println("batch queue not available (could not run qsub)")
@@ -87,7 +87,7 @@ function kill(manager::Union{PBSManager, SGEManager}, id::Int64, config::WorkerC
     remotecall(id,exit)
     close(get(config.io))
 
-    kill(get(config.userdata)[:process],15)  
+    kill(get(config.userdata)[:process],15)
 
     if isfile(get(config.userdata)[:iofile])
         rm(get(config.userdata)[:iofile])
@@ -95,5 +95,5 @@ function kill(manager::Union{PBSManager, SGEManager}, id::Int64, config::WorkerC
 
 end
 
-addprocs_pbs(np::Integer; queue::AbstractString="",enviromentVars::AbstractString="") = addprocs(PBSManager(np, queue),enviromentVars=enviromentVars)
-addprocs_sge(np::Integer; queue::AbstractString="",enviromentVars::AbstractString="") = addprocs(SGEManager(np, queue),enviromentVars=enviromentVars)
+addprocs_pbs(np::Integer; queue::AbstractString="",qsub_env::AbstractString="") = addprocs(PBSManager(np, queue),qsub_env=qsub_env)
+addprocs_sge(np::Integer; queue::AbstractString="",qsub_env::AbstractString="") = addprocs(SGEManager(np, queue),qsub_env=qsub_env)
