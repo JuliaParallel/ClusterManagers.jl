@@ -34,12 +34,17 @@ function launch(manager::Union{PBSManager, SGEManager}, params::Dict, instances_
             qsub_env = `-v $evar`
         end
 
+	# 64bit Julia pre-allocates 10G virtual memory
+	if WORD_SIZE == 64
+		vmem=`-l h_vmem=10.1G`
+	end
+
         np = manager.np
 
         jobname = `julia-$(getpid())`
 
         cmd = `cd $dir && $exename $exeflags --worker`
-        qsub_cmd = pipeline(`echo $(Base.shell_escape(cmd))` , (isPBS ? `qsub -N $jobname -j oe -k o -t 1-$np $queue $qsub_env` : `qsub -N $jobname -terse -j y -t 1-$np $queue $qsub_env`))
+        qsub_cmd = pipeline(`echo $(Base.shell_escape(cmd))` , (isPBS ? `qsub -N $jobname -j oe -k o -t 1-$np $queue $qsub_env` : `qsub -N $jobname -terse -j y -t 1-$np $vmem $queue $qsub_env`))
         out,qsub_proc = open(qsub_cmd)
         if !success(qsub_proc)
             println("batch queue not available (could not run qsub)")
