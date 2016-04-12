@@ -1,23 +1,23 @@
-## ClusterManagers - Support for different clustering technologies
+# ClusterManagers
 
-Currently support exists for :
+Support for different job queue systems commonly used on compute clusters.
 
-- Sun Grid Engine - via `addprocs_sge(np::Integer, queue="")` or `addprocs(SGEManager(np, queue))`
-                    and `addprocs_pbs(np::Integer, queue="")` or `addprocs(PBSManager(np, queue))`
+## Currently supported job queue systems
 
-- Scyld - `addprocs_scyld(np::Integer)` or `addprocs(ScyldManager(np))`
-- HTCondor - `addprocs_htc(np::Integer)` or `addprocs(HTCManager(np))`
-- Slurm - `addprocs_slurm(np::Integer; kwargs...)` or `addprocs(SlurmManager(np); kwargs...)`
-- Local manager with CPU affinity setting - `addprocs(LocalAffinityManager(;np=CPU_CORES, mode::AffinityMode=BALANCED, affinities=[]); kwargs...)`
+| Job queue system | Command to add processors |
+| ---------------- | ------------------------- |
+| Sun Grid Engine  | `addprocs_sge(np::Integer, queue="")` or `addprocs(SGEManager(np, queue))` |
+| PBS              | `addprocs_pbs(np::Integer, queue="")` or `addprocs(PBSManager(np, queue))` |
+| Scyld | `addprocs_scyld(np::Integer)` or `addprocs(ScyldManager(np))` |
+| HTCondor | `addprocs_htc(np::Integer)` or `addprocs(HTCManager(np))` |
+| Slurm | `addprocs_slurm(np::Integer; kwargs...)` or `addprocs(SlurmManager(np); kwargs...)` |
+| Local manager with CPU affinity setting | `addprocs(LocalAffinityManager(;np=CPU_CORES, mode::AffinityMode=BALANCED, affinities=[]); kwargs...)` |
 
+You can also write your own custom cluster manager; see the instructions in the [Julia manual](http://docs.julialang.org/en/latest/manual/parallel-computing/#clustermanagers)
 
-### To write a custom cluster manager:
+### Slurm: a simple example
 
-See section http://docs.julialang.org/en/latest/manual/parallel-computing/#clustermanagers
-
-### Example usage (for the Slurm cluster manager)
-
-<pre><code>
+```jl
 using ClusterManagers
 
 # Arguments to the Slurm srun(1) command can be given as keyword
@@ -46,10 +46,9 @@ end
 for i in workers()
 	rmprocs(i)
 end
-</code></pre>
+```
 
-
-### Using LocalAffinityManager (for pinning local workers to specific cores)
+### Using `LocalAffinityManager` (for pinning local workers to specific cores)
 
 - Linux only feature
 - Requires the Linux `taskset` command to be installed
@@ -58,10 +57,9 @@ end
 where
 
 - `np` is the number of workers to be started
-- `affinities` if specified, is a list of CPU Ids. As many workers as entries in `affinities` are launched. Each worker is pinned
-to the specified CPU Id.
+- `affinities` if specified, is a list of CPU IDs. As many workers as entries in `affinities` are launched. Each worker is pinned
+to the specified CPU ID.
 - `mode` (used only when `affinities` is not specified, can be either `COMPACT` or `BALANCED`) - `COMPACT` results in the requested number
 of workers pinned to cores in increasing order, For example, worker1 => CPU0, worker2 => CPU1 and so on. `BALANCED` tries to spread
 the workers. Useful when we have multiple CPU sockets, with each socket having multiple cores. A `BALANCED` mode results in workers
 spread across CPU sockets. Default is `BALANCED`
-
