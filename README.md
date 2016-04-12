@@ -48,6 +48,31 @@ for i in workers()
 end
 ```
 
+### SGE - a simple interactive example
+
+```jl
+julia> using ClusterManagers
+
+julia> ClusterManagers.addprocs_sge(5)
+job id is 961, waiting for job to start .
+5-element Array{Any,1}:
+2
+3
+4
+5
+6
+
+julia> @parallel for i=1:5
+       run(`hostname`)
+       end
+
+julia>  From worker 2:  compute-6
+        From worker 4:  compute-6
+        From worker 5:  compute-6
+        From worker 6:  compute-6
+        From worker 3:  compute-6
+```
+
 ### Using `LocalAffinityManager` (for pinning local workers to specific cores)
 
 - Linux only feature
