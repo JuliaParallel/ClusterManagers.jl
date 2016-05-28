@@ -35,7 +35,7 @@ function launch(manager::LocalAffinityManager, params::Dict, launched::Array, c:
 
     for core_id in manager.affinities
         io, pobj = open(detach(
-            setenv(`taskset -c $core_id $(Base.julia_cmd(exename)) $exeflags --worker`, dir=dir)), "r")
+            setenv(`taskset -c $core_id $(Base.julia_cmd(exename)) $exeflags $worker_arg`, dir=dir)), "r")
         wconfig = WorkerConfig()
         wconfig.process = pobj
         wconfig.io = io
