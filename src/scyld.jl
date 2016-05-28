@@ -19,7 +19,7 @@ function launch(manager::ScyldManager, params::Dict, instances_arr::Array, c::Co
         end
         nodes = split(chomp(readline(out)),':')
         for (i,node) in enumerate(nodes)
-            cmd = `cd $dir && $exename $exeflags --worker`
+            cmd = `cd $dir && $exename $exeflags $worker_arg`
             cmd = detach(`bpsh $node sh -l -c $(Base.shell_escape(cmd))`)
             config = WorkerConfig()
 

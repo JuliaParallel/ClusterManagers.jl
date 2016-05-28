@@ -19,7 +19,7 @@ function condor_script(portnum::Integer, np::Integer, params::Dict)
     scriptf = open("$tdir/$jobname.sh", "w")
     println(scriptf, "#!/bin/sh")
     println(scriptf, "cd $(Base.shell_escape(dir))")
-    println(scriptf, "$(Base.shell_escape(exename)) --worker | /usr/bin/telnet $(Base.shell_escape(hostname)) $portnum")
+    println(scriptf, "$(Base.shell_escape(exename)) $(Base.shell_escape(worker_arg)) | /usr/bin/telnet $(Base.shell_escape(hostname)) $portnum")
     close(scriptf)
 
     subf = open("$tdir/$jobname.sub", "w")
