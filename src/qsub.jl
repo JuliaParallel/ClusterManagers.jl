@@ -39,6 +39,8 @@ function launch(manager::Union{PBSManager, SGEManager, QRSHManager},
             qsub_env = `-v $evar`
         end
 
+        qsub_opts = @cmd(param[:qsub_opts])
+
         np = manager.np
 
         jobname = `julia-$(getpid())`
@@ -61,7 +63,7 @@ function launch(manager::Union{PBSManager, SGEManager, QRSHManager},
             cmd = `cd $dir && $exename $exeflags $worker_arg`
             qsub_cmd = pipeline(`echo $(Base.shell_escape(cmd))` , (isPBS ?
                     `qsub -N $jobname -j oe -k o -t 1-$np $queue $qsub_env` :
-                    `qsub -N $jobname -terse -j y -t 1-$np $queue $qsub_env`))
+                    `qsub -N $jobname -terse -j y -t 1-$np $qsub_opts $queue $qsub_env`))
             out,qsub_proc = open(qsub_cmd)
             if !success(qsub_proc)
                 println("batch queue not available (could not run qsub)")
@@ -106,7 +108,7 @@ function manage(manager::Union{PBSManager, SGEManager, QRSHManager},
 end
 
 function kill(manager::Union{PBSManager, SGEManager, QRSHManager}, id::Int64, config::WorkerConfig)
-    remotecall(id,exit)
+    remotecall(exit,id)
     close(get(config.io))
 
     kill(get(config.userdata)[:process],15)
@@ -121,8 +123,8 @@ end
 addprocs_pbs(np::Integer; queue::AbstractString="", qsub_env::AbstractString="") =
         addprocs(PBSManager(np, queue),qsub_env=qsub_env)
 
-addprocs_sge(np::Integer; queue::AbstractString="", qsub_env::AbstractString="") =
-        addprocs(SGEManager(np, queue),qsub_env=qsub_env)
+addprocs_sge(np::Integer; queue::AbstractString="", qsub_env::AbstractString="",qsub_opts::AbstractString="") =
+        addprocs(SGEManager(np, queue),qsub_env=qsub_env,qsub_opts=qsub_opts)
 
 addprocs_qrsh(np::Integer; queue::AbstractString="", qsub_env::AbstractString="") =
         addprocs(QRSHManager(np, queue),qsub_env=qsub_env)
