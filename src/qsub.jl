@@ -39,6 +39,27 @@ function launch(manager::Union{PBSManager, SGEManager, QRSHManager},
             qsub_env = `-v $evar`
         end
 
+        if params[:tmem] == ""
+            tmem= `-l tmem=1.9G`        # Required by CS Cluster  - 1.9G best throughput
+        else 
+            tmemvar = params[:tmem]
+            tmem = `-l tmem=$tmemvar`
+        end
+
+        if params[:h_vmem] == ""
+            h_vmem= `-l h_vmem=1.9G`    # Required by CS Cluster - 1.9G best throughput
+        else 
+            h_vmemvar = params[:h_vmem]
+            h_vmem = `-l h_vmem=$h_vmemvar`
+        end
+
+        if params[:h_rt] == ""
+            h_rt= ``                    # Not actually required.... but should be specified
+        else 
+            h_rtvar = params[:h_rt]
+            h_rt = `-l h_rt=$h_rtvar`
+        end
+
         np = manager.np
 
         jobname = `julia-$(getpid())`
@@ -61,7 +82,7 @@ function launch(manager::Union{PBSManager, SGEManager, QRSHManager},
             cmd = `cd $dir && $exename $exeflags $worker_arg`
             qsub_cmd = pipeline(`echo $(Base.shell_escape(cmd))` , (isPBS ?
                     `qsub -N $jobname -j oe -k o -t 1-$np $queue $qsub_env` :
-                    `qsub -N $jobname -terse -j y -t 1-$np $queue $qsub_env`))
+                    `qsub -N $jobname -terse -j y -t 1-$np $h_vmem $tmem $h_rt -V $queue $qsub_env`))
             out,qsub_proc = open(qsub_cmd)
             if !success(qsub_proc)
                 println("batch queue not available (could not run qsub)")
@@ -106,7 +127,7 @@ function manage(manager::Union{PBSManager, SGEManager, QRSHManager},
 end
 
 function kill(manager::Union{PBSManager, SGEManager, QRSHManager}, id::Int64, config::WorkerConfig)
-    remotecall(id,exit)
+    remotecall(exit,id)
     close(get(config.io))
 
     kill(get(config.userdata)[:process],15)
@@ -121,8 +142,9 @@ end
 addprocs_pbs(np::Integer; queue::AbstractString="", qsub_env::AbstractString="") =
         addprocs(PBSManager(np, queue),qsub_env=qsub_env)
 
-addprocs_sge(np::Integer; queue::AbstractString="", qsub_env::AbstractString="") =
-        addprocs(SGEManager(np, queue),qsub_env=qsub_env)
+addprocs_sge(np::Integer; queue::AbstractString="", qsub_env::AbstractString="",
+                tmem::AbstractString="1.9G", h_vmem::AbstractString="1.9G",h_rt::AbstractString="") =
+        addprocs(SGEManager(np, queue),qsub_env=qsub_env,tmem=tmem,h_vmem=h_vmem,h_rt=h_rt)
 
 addprocs_qrsh(np::Integer; queue::AbstractString="", qsub_env::AbstractString="") =
         addprocs(QRSHManager(np, queue),qsub_env=qsub_env)
