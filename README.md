@@ -73,6 +73,31 @@ julia>  From worker 2:  compute-6
         From worker 3:  compute-6
 ```
 
+### SGE - an example with resource list
+
+Some clusters require to specify a list of required resources. Required memory has been an [issue for example.](https://github.com/JuliaLang/julia/issues/10390)
+
+```jl
+julia> using ClusterManagers
+
+julia> addprocs_sge(5,res_list="h_vmem=4G,tmem=4G")
+job id is 9827051, waiting for job to start ........
+5-element Array{Int64,1}:
+ 22
+ 23
+ 24
+ 25
+ 26
+
+julia> pmap(x->run(`hostname`),workers());
+
+julia>  From worker 26: lum-7-2.local
+        From worker 23: pace-6-10.local
+        From worker 22: chong-207-10.local
+        From worker 24: pace-6-11.local
+        From worker 25: cheech-207-16.local
+```
+
 ### Using `LocalAffinityManager` (for pinning local workers to specific cores)
 
 - Linux only feature
