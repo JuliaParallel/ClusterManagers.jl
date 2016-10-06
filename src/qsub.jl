@@ -69,7 +69,7 @@ function launch(manager::Union{PBSManager, SGEManager, QRSHManager},
 
             cmd = `cd $dir && $exename $exeflags $worker_arg`
             qsub_cmd = pipeline(`echo $(Base.shell_escape(cmd))` , (isPBS ?
-                    `qsub -N $jobname -j oe -k o -t 1-$np $queue $qsub_env` :
+                    `qsub -N $jobname -j oe -k o -t 1-$np $queue $qsub_env $res_list` :
                     `qsub -N $jobname -terse -j y -R y -t 1-$np -V $res_list $queue $qsub_env`))
             out,qsub_proc = open(qsub_cmd)
             if !success(qsub_proc)
@@ -127,8 +127,8 @@ function kill(manager::Union{PBSManager, SGEManager, QRSHManager}, id::Int64, co
     end
 end
 
-addprocs_pbs(np::Integer; queue::AbstractString="", qsub_env::AbstractString="") =
-        addprocs(PBSManager(np, queue),qsub_env=qsub_env)
+addprocs_pbs(np::Integer; queue::AbstractString="", qsub_env::AbstractString="", res_list::AbstractString="") =
+        addprocs(PBSManager(np, queue),qsub_env=qsub_env,res_list=res_list)
 
 addprocs_sge(np::Integer; queue::AbstractString="", qsub_env::AbstractString="", res_list::AbstractString="") =
         addprocs(SGEManager(np, queue),qsub_env=qsub_env,res_list=res_list)
