@@ -115,7 +115,7 @@ function manage(manager::Union{PBSManager, SGEManager, QRSHManager},
 end
 
 function kill(manager::Union{PBSManager, SGEManager, QRSHManager}, id::Int64, config::WorkerConfig)
-    remotecall(id,exit)
+    remotecall(exit,id)
     close(get(config.io))
 
     kill(get(config.userdata)[:process],15)
