@@ -1,5 +1,7 @@
 module ClusterManagers
 
+using Compat
+
 export launch, manage, kill, init_worker, connect
 import Base: launch, manage, kill, init_worker, connect
 
