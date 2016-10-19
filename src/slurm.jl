@@ -41,7 +41,7 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
 
         np = manager.np
         jobname = "julia-$(getpid())"
-        srun_cmd = `srun -J $jobname -n $np -o "job%4t.out" -D $exehome $(srunargs) $exename $exeflags $worker_arg`
+        srun_cmd = `srun -J $jobname -n $np -o "job%4t.out" -D $exehome $(srunargs) $exename $exeflags -e Base.start_worker(\"$(Base.cluster_cookie())\")`
 
         println("srun_cmd: ", srun_cmd)
 
