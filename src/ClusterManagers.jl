@@ -10,6 +10,9 @@ if VERSION >= v"0.5.0-dev+4047"
 else
     worker_arg = `--worker`
 end
+println("cookie: ", Base.cluster_cookie())
+println("VERSION: ", VERSION)
+println("worker_arg: ", worker_arg)
 
 # PBS doesn't have the same semantics as SGE wrt to file accumulate,
 # a different solution will have to be found
