@@ -113,3 +113,43 @@ to the specified CPU ID.
 of workers pinned to cores in increasing order, For example, worker1 => CPU0, worker2 => CPU1 and so on. `BALANCED` tries to spread
 the workers. Useful when we have multiple CPU sockets, with each socket having multiple cores. A `BALANCED` mode results in workers
 spread across CPU sockets. Default is `BALANCED`
+
+### Using `ElasticManager` (dynamically adding workers to a cluster)
+
+The `ElasticManager` is useful in scenarios where we want to dynamically add workers to a cluster
+It achieves this by listening on a known port on the master. The launched workers connect to this
+port and publish their own host/port information for other workers to connect to.
+
+##### Usage
+
+On the master, you need to instantiate an instance of `ElasticManager`. The constructors defined are:
+```
+ElasticManager(;addr=IPv4("127.0.0.1"), port=9009, cookie=nothing)
+ElasticManager(port) = ElasticManager(;port=port)
+ElasticManager(addr, port) = ElasticManager(;addr=addr, port=port)
+ElasticManager(addr, port, cookie) = ElasticManager(;addr=addr, port=port, cookie=cookie)
+```
+
+On the worker, you need to call `ClusterManagers.elastic_worker` with the addr/port that the master
+is listening on and the same cookie. `elastic_worker` is defined as:
+```
+ClusterManagers.elastic_worker(cookie, addr="127.0.0.1", port=9009; stdout_to_master=true)
+```
+
+For example, on the master:
+
+```
+using ClusterManagers
+em=ElasticManager(cookie="foobar")
+```
+
+and launch each worker locally as
+`echo "using ClusterManagers; ClusterManagers.elastic_worker(\"foobar\")" | julia  &`
+
+or if you want a REPL on the worker, you can start a julia process normally and manually enter
+```
+using ClusterManagers
+@schedule ClusterManagers.elastic_worker("foobar", "addr_of_master", port_of_master; stdout_to_master=false)
+```
+
+The above will yield back the REPL prompt and also display any printed output locally.
