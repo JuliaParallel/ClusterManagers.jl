@@ -124,7 +124,7 @@ port and publish their own host/port information for other workers to connect to
 
 On the master, you need to instantiate an instance of `ElasticManager`. The constructors defined are:
 ```
-ElasticManager(;addr=IPv4("127.0.0.1"), port=9009, cookie=nothing)
+ElasticManager(;addr=IPv4("127.0.0.1"), port=9009, cookie=nothing, topology=:all_to_all)
 ElasticManager(port) = ElasticManager(;port=port)
 ElasticManager(addr, port) = ElasticManager(;addr=addr, port=port)
 ElasticManager(addr, port, cookie) = ElasticManager(;addr=addr, port=port, cookie=cookie)

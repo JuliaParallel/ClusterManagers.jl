@@ -8,16 +8,16 @@ type ElasticManager <: ClusterManager
     active::Dict{Int, WorkerConfig}        # active workers
     pending::Channel{TCPSocket}          # to be added workers
     terminated::Set{Int}             # terminated worker ids
+    topology::Symbol
 
-
-    function ElasticManager(;addr=IPv4("127.0.0.1"), port=9009, cookie=nothing)
+    function ElasticManager(;addr=IPv4("127.0.0.1"), port=9009, cookie=nothing, topology=:all_to_all)
         if VERSION >= v"0.5.0-dev+4047"
             cookie !== nothing && Base.cluster_cookie(cookie)
         end
 
         l_sock = listen(addr, port)
 
-        lman = new(Dict{Int, WorkerConfig}(), Channel{TCPSocket}(typemax(Int)), Set{Int}())
+        lman = new(Dict{Int, WorkerConfig}(), Channel{TCPSocket}(typemax(Int)), Set{Int}(), topology)
 
         @schedule begin
             while true
@@ -65,7 +65,7 @@ function process_pending_connections(mgr::ElasticManager)
     while true
         wait(mgr.pending)
         try
-            addprocs(mgr)
+            addprocs(mgr; topology=mgr.topology)
         catch e
             showerror(STDERR, e)
             Base.show_backtrace(STDERR, Base.catch_backtrace())
