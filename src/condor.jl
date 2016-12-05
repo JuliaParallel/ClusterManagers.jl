@@ -29,6 +29,7 @@ function condor_script(portnum::Integer, np::Integer, params::Dict)
     println(subf, "should_transfer_files = yes")
     println(subf, "transfer_input_files = $tdir/$jobname.sh")
     println(subf, "Notification = Error")
+    println(subf, "getenv = true")
     for i = 1:np
         println(subf, "output = $tdir/$jobname-$i.o")
         println(subf, "error= $tdir/$jobname-$i.e")
