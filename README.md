@@ -75,7 +75,7 @@ julia>  From worker 2:  compute-6
 
 ### SGE - an example with resource list
 
-Some clusters require to specify a list of required resources. Required memory has been an [issue for example.](https://github.com/JuliaLang/julia/issues/10390)
+Some clusters require the user to specify a list of required resources. For example, it may be necessary to specify how much memory will be needed by the job - see this [issue](https://github.com/JuliaLang/julia/issues/10390).
 
 ```jl
 julia> using ClusterManagers
@@ -100,30 +100,30 @@ julia>  From worker 26: lum-7-2.local
 
 ### Using `LocalAffinityManager` (for pinning local workers to specific cores)
 
-- Linux only feature
-- Requires the Linux `taskset` command to be installed
-- Usage : `addprocs(LocalAffinityManager(;np=CPU_CORES, mode::AffinityMode=BALANCED, affinities=[]); kwargs...)`
+- Linux only feature.
+- Requires the Linux `taskset` command to be installed.
+- Usage : `addprocs(LocalAffinityManager(;np=CPU_CORES, mode::AffinityMode=BALANCED, affinities=[]); kwargs...)`.
 
 where
 
-- `np` is the number of workers to be started
-- `affinities` if specified, is a list of CPU IDs. As many workers as entries in `affinities` are launched. Each worker is pinned
+- `np` is the number of workers to be started.
+- `affinities`, if specified, is a list of CPU IDs. As many workers as entries in `affinities` are launched. Each worker is pinned
 to the specified CPU ID.
 - `mode` (used only when `affinities` is not specified, can be either `COMPACT` or `BALANCED`) - `COMPACT` results in the requested number
 of workers pinned to cores in increasing order, For example, worker1 => CPU0, worker2 => CPU1 and so on. `BALANCED` tries to spread
 the workers. Useful when we have multiple CPU sockets, with each socket having multiple cores. A `BALANCED` mode results in workers
-spread across CPU sockets. Default is `BALANCED`
+spread across CPU sockets. Default is `BALANCED`.
 
 ### Using `ElasticManager` (dynamically adding workers to a cluster)
 
-The `ElasticManager` is useful in scenarios where we want to dynamically add workers to a cluster
+The `ElasticManager` is useful in scenarios where we want to dynamically add workers to a cluster.
 It achieves this by listening on a known port on the master. The launched workers connect to this
 port and publish their own host/port information for other workers to connect to.
 
 ##### Usage
 
 On the master, you need to instantiate an instance of `ElasticManager`. The constructors defined are:
-```
+```jl
 ElasticManager(;addr=IPv4("127.0.0.1"), port=9009, cookie=nothing, topology=:all_to_all)
 ElasticManager(port) = ElasticManager(;port=port)
 ElasticManager(addr, port) = ElasticManager(;addr=addr, port=port)
@@ -138,7 +138,7 @@ ClusterManagers.elastic_worker(cookie, addr="127.0.0.1", port=9009; stdout_to_ma
 
 For example, on the master:
 
-```
+```jl
 using ClusterManagers
 em=ElasticManager(cookie="foobar")
 ```
@@ -147,7 +147,7 @@ and launch each worker locally as
 `echo "using ClusterManagers; ClusterManagers.elastic_worker(\"foobar\")" | julia  &`
 
 or if you want a REPL on the worker, you can start a julia process normally and manually enter
-```
+```jl
 using ClusterManagers
 @schedule ClusterManagers.elastic_worker("foobar", "addr_of_master", port_of_master; stdout_to_master=false)
 ```
