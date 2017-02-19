@@ -41,8 +41,15 @@ end
 
 function launch(manager::HTCManager, params::Dict, instances_arr::Array, c::Condition)
     try
-        portnum = rand(8000:9000)
-        server = listen(portnum)
+        portnum = 0
+        server = 0
+        while true
+            try
+                portnum = rand(8000:9000)
+                server = listen(portnum)
+                break
+            end
+        end
         np = manager.np
 
         script = condor_script(portnum, np, params)
