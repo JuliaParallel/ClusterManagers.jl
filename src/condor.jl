@@ -29,6 +29,8 @@ function condor_script(portnum::Integer, np::Integer, params::Dict)
     println(subf, "should_transfer_files = yes")
     println(subf, "transfer_input_files = $tdir/$jobname.sh")
     println(subf, "Notification = Error")
+    haskey(params,:cpus) && params[:cpus] != nothing && println(subf, "request_cpus = $(params[:cpus])")
+    haskey(params,:memory) && params[:memory] != nothing && println(subf, "request_memory = $(params[:memory])")
     for i = 1:np
         println(subf, "output = $tdir/$jobname-$i.o")
         println(subf, "error= $tdir/$jobname-$i.e")
@@ -87,4 +89,4 @@ function manage(manager::HTCManager, id::Integer, config::WorkerConfig, op::Symb
     end
 end
 
-addprocs_htc(np::Integer) = addprocs(HTCManager(np))
+addprocs_htc(np::Integer;cpus=nothing,memory=nothing) = addprocs(HTCManager(np),cpus=cpus,memory=memory)
