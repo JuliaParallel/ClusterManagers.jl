@@ -36,9 +36,6 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
             end
         end
 
-        # cleanup old files
-        map(rm, filter(t -> ismatch(r"job.*\.out", t), readdir(exehome)))
-
         np = manager.np
         jobname = "julia-$(getpid())"
         srun_cmd = `srun -J $jobname -n $np -o "job%4t.out" -D $exehome $(srunargs) $exename $exeflags $worker_arg`
@@ -72,6 +69,11 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
                 notify(c)
             end
         end
+
+        # cleanup old files at exit
+        f() = map(rm, filter(t -> ismatch(r"job.*\.out", t), readdir(exehome)))
+        atexit(f)
+
     catch e
         println("Error launching Slurm job:")
         rethrow(e)
