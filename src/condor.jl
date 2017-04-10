@@ -75,7 +75,7 @@ end
 function manage(manager::HTCManager, id::Integer, config::WorkerConfig, op::Symbol)
     if op == :finalize
         if !isnull(config.io)
-            close(config.io)
+            close(get(config.io))
         end
 #     elseif op == :interrupt
 #         job = config[:job]
