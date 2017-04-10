@@ -4,6 +4,10 @@
 
 export ElasticManager, elastic_worker
 
+const HDR_COOKIE_LEN = (VERSION >= v"0.6.0-dev.2769") ? Base.Distributed.HDR_COOKIE_LEN : 
+                       (VERSION >= v"0.5.0-dev+4047") ? Base.HDR_COOKIE_LEN :
+                       0
+
 type ElasticManager <: ClusterManager
     active::Dict{Int, WorkerConfig}        # active workers
     pending::Channel{TCPSocket}          # to be added workers
@@ -44,13 +48,13 @@ function process_worker_conn(mgr::ElasticManager, s::TCPSocket)
 
     # Validate cookie
     if VERSION >= v"0.5.0-dev+4047"
-        cookie = read(s, Base.HDR_COOKIE_LEN)
-        if length(cookie) < Base.HDR_COOKIE_LEN
+        cookie = read(s, HDR_COOKIE_LEN)
+        if length(cookie) < HDR_COOKIE_LEN
             error("Cookie read failed. Connection closed by peer.")
         end
 
         self_cookie = Base.cluster_cookie()
-        for i in 1:Base.HDR_COOKIE_LEN
+        for i in 1:HDR_COOKIE_LEN
             if UInt8(self_cookie[i]) != cookie[i]
                 println(i, " ", self_cookie[i], " ", cookie[i])
                 error("Invalid cookie sent by remote worker.")
@@ -122,7 +126,7 @@ end
 function elastic_worker(cookie, addr="127.0.0.1", port=9009; stdout_to_master=true)
     c = connect(addr, port)
     if VERSION >= v"0.5.0-dev+4047"
-        write(c, rpad(cookie, Base.HDR_COOKIE_LEN)[1:Base.HDR_COOKIE_LEN])
+        write(c, rpad(cookie, HDR_COOKIE_LEN)[1:HDR_COOKIE_LEN])
     end
     stdout_to_master && redirect_stdout(c)
     Base.start_worker(c, cookie)
