@@ -13,7 +13,7 @@ Support for different job queue systems commonly used on compute clusters.
 | Slurm | `addprocs_slurm(np::Integer; kwargs...)` or `addprocs(SlurmManager(np); kwargs...)` |
 | Local manager with CPU affinity setting | `addprocs(LocalAffinityManager(;np=CPU_CORES, mode::AffinityMode=BALANCED, affinities=[]); kwargs...)` |
 
-You can also write your own custom cluster manager; see the instructions in the [Julia manual](http://docs.julialang.org/en/latest/manual/parallel-computing/#clustermanagers)
+You can also write your own custom cluster manager; see the instructions in the [Julia manual](http://docs.julialang.org/en/latest/manual/parallel-computing.html#ClusterManagers-1)
 
 ### Slurm: a simple example
 
