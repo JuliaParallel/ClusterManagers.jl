@@ -45,7 +45,7 @@ function launch(manager::Union{PBSManager, SGEManager, QRSHManager},
         jobname = `julia-$(getpid())`
 
         if isa(manager, QRSHManager)
-          cmd = `cd $dir && $exename $exeflags $worker_arg`
+          cmd = `cd $dir '&&' $exename $exeflags $worker_arg`
           qrsh_cmd = `qrsh $queue $qsub_env -V -N $jobname -now n "$cmd"`
 
           stream_proc = [open(qrsh_cmd) for i in 1:np]
@@ -67,7 +67,7 @@ function launch(manager::Union{PBSManager, SGEManager, QRSHManager},
                 res_list = `-l $evar`
             end
 
-            cmd = `cd $dir && $exename $exeflags $worker_arg`
+            cmd = `cd $dir '&&' $exename $exeflags $worker_arg`
             qsub_cmd = pipeline(`echo $(Base.shell_escape(cmd))` , (isPBS ?
                     `qsub -N $jobname -j oe -k o -t 1-$np $queue $qsub_env $res_list` :
                     `qsub -N $jobname -terse -j y -R y -t 1-$np -V $res_list $queue $qsub_env`))
