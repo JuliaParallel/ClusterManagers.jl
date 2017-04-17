@@ -1,3 +1,5 @@
+VERSION >= v"0.4.0-dev+6521" && __precompile__(true)
+
 module ClusterManagers
 
 using Compat
@@ -5,10 +7,13 @@ using Compat
 export launch, manage, kill, init_worker, connect
 import Base: launch, manage, kill, init_worker, connect
 
-if VERSION >= v"0.5.0-dev+4047"
-    worker_arg = `--worker $(Base.cluster_cookie())`
-else
-    worker_arg = `--worker`
+worker_arg = `--worker`
+
+function __init__()
+    global worker_arg
+    if VERSION >= v"0.5.0-dev+4047"
+        worker_arg = `--worker $(Base.cluster_cookie())`
+    end
 end
 
 # PBS doesn't have the same semantics as SGE wrt to file accumulate,
