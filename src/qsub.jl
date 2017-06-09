@@ -28,7 +28,14 @@ function launch(manager::Union{PBSManager, SGEManager, QRSHManager},
             queue = ``
         else
             this_queue = manager.queue
-            queue = `-q $this_queue`
+            # If a different queue switch is used (eg -P) or user wants to pass in
+            # multiple arguments, then treat each word as a separate arguments:
+            words = split(this_queue)
+            if startswith(this_queue, "-")
+                queue = `$words`
+            else
+                 queue = `-q $words`
+            end
         end
 
 
