@@ -12,7 +12,7 @@ worker_arg = `--worker`
 function __init__()
     global worker_arg
     if VERSION >= v"0.5.0-dev+4047"
-        worker_arg = `--worker $(Base.cluster_cookie())`
+        worker_arg = `--worker=$(Base.cluster_cookie())`
     end
 end
 
