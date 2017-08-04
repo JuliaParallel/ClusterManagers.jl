@@ -12,11 +12,10 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
         exehome = params[:dir]
         exename = params[:exename]
         exeflags = params[:exeflags]
-        p = copy(params)
-        p = delete!(p, :dir)
-        p = delete!(p, :exename)
-        p = delete!(p, :exeflags)
-        p = delete!(p, :topology)
+
+        stdkeys = keys(Base.Distributed.default_addprocs_params())
+        p = filter((x,y) -> !(x in stdkeys), params)
+
         srunargs = []
         for k in keys(p)
             if length(string(k)) == 1
