@@ -40,8 +40,9 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
 
         np = manager.np
         jobname = "julia-$(getpid())"
-        srun_cmd = `srun -J $jobname -n $np -o "job%4t.out" -D $exehome $(srunargs) $exename $exeflags $worker_arg`
-        out, srun_proc = open(srun_cmd)
+        srun_cmd = `srun -J $jobname -n $np -o "job%4t.out" -D $exehome $(srunargs) $exename $exeflags -e 'Base.start_worker(readline())'`
+        srun_stdin, srun_proc = open(srun_cmd, "w")
+        println(srun_stdin, Base.Distributed.cluster_cookie())
         for i = 0:np - 1
             print("connecting to worker $(i + 1) out of $np\r")
             local w=[]
