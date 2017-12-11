@@ -15,9 +15,7 @@ type ElasticManager <: ClusterManager
     topology::Symbol
 
     function ElasticManager(;addr=IPv4("127.0.0.1"), port=9009, cookie=nothing, topology=:all_to_all)
-        if VERSION >= v"0.5.0-dev+4047"
-            cookie !== nothing && Base.cluster_cookie(cookie)
-        end
+        cookie !== nothing && Base.cluster_cookie(cookie)
 
         l_sock = listen(addr, port)
 
@@ -47,18 +45,15 @@ function process_worker_conn(mgr::ElasticManager, s::TCPSocket)
     wc.io = s
 
     # Validate cookie
-    if VERSION >= v"0.5.0-dev+4047"
-        cookie = read(s, HDR_COOKIE_LEN)
-        if length(cookie) < HDR_COOKIE_LEN
-            error("Cookie read failed. Connection closed by peer.")
-        end
-
-        self_cookie = Base.cluster_cookie()
-        for i in 1:HDR_COOKIE_LEN
-            if UInt8(self_cookie[i]) != cookie[i]
-                println(i, " ", self_cookie[i], " ", cookie[i])
-                error("Invalid cookie sent by remote worker.")
-            end
+    cookie = read(s, HDR_COOKIE_LEN)
+    if length(cookie) < HDR_COOKIE_LEN
+        error("Cookie read failed. Connection closed by peer.")
+    end
+    self_cookie = Base.cluster_cookie()
+    for i in 1:HDR_COOKIE_LEN
+        if UInt8(self_cookie[i]) != cookie[i]
+            println(i, " ", self_cookie[i], " ", cookie[i])
+            error("Invalid cookie sent by remote worker.")
         end
     end
 
@@ -125,9 +120,7 @@ end
 # addr, port that a ElasticManager on the master processes is listening on.
 function elastic_worker(cookie, addr="127.0.0.1", port=9009; stdout_to_master=true)
     c = connect(addr, port)
-    if VERSION >= v"0.5.0-dev+4047"
-        write(c, rpad(cookie, HDR_COOKIE_LEN)[1:HDR_COOKIE_LEN])
-    end
+    write(c, rpad(cookie, HDR_COOKIE_LEN)[1:HDR_COOKIE_LEN])
     stdout_to_master && redirect_stdout(c)
     Base.start_worker(c, cookie)
 end
