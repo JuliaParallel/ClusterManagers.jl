@@ -117,7 +117,7 @@ function Base.show(io::IO, mgr::ElasticManager)
     seek(iob, position(iob)-1)
     println(iob, "]")
 
-    print(io, takebuf_string(iob))
+    print(io, String(take!(iob)))
 end
 
 # Does not return. If executing from a REPL try
