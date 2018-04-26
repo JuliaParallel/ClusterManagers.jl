@@ -81,15 +81,19 @@ function launch(manager::Union{PBSManager, SGEManager, QRSHManager},
                 id = id[1:end-2]
             end
 
-            filename(i) = isPBS ? "$home/julia-$(getpid()).o$id-$i" : "$home/julia-$(getpid()).o$id.$i"
+            filenames(i) = "$home/julia-$(getpid()).o$id-$i","$home/julia-$(getpid())-$i.o$id","$home/julia-$(getpid()).o$id.$i"
+            
             print("job id is $id, waiting for job to start ")
             for i=1:np
                 # wait for each output stream file to get created
-                fname = filename(i)
-                while !isfile(fname)
+                fnames = filenames(i)
+                j = 0
+                while (j=findfirst(x->isfile(x),fnames))==0
                     print(".")
                     sleep(1.0)
                 end
+                fname = fnames[j]
+
                 # Hack to get Base to get the host:port, the Julia process has already started.
                 cmd = `tail -f $fname`
 
