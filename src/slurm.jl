@@ -36,7 +36,7 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
         end
 
         # cleanup old files
-        map(rm, filter(t -> ismatch(r"job.*\.out", t), readdir(exehome)))
+        map(rm, filter(t -> occursin(r"job.*\.out", t), readdir(exehome)))
 
         np = manager.np
         jobname = "julia-$(getpid())"

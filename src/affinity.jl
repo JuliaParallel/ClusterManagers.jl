@@ -16,7 +16,7 @@ mutable struct LocalAffinityManager <: ClusterManager
             else
                 # mode == BALANCED
                 if np > 1
-                    affinities = [Int(floor(i)) for i in linspace(0, CPU_CORES - 1e-3, np)]
+                    affinities = [Int(floor(i)) for i in range(0, stop=CPU_CORES - 1e-3, length=np)]
                 else
                     affinities = [0]
                 end

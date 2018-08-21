@@ -64,8 +64,8 @@ function process_pending_connections(mgr::ElasticManager)
         try
             addprocs(mgr; topology=mgr.topology)
         catch e
-            showerror(STDERR, e)
-            Base.show_backtrace(STDERR, Base.catch_backtrace())
+            showerror(stderr, e)
+            Base.show_backtrace(stderr, Base.catch_backtrace())
         end
     end
 end
