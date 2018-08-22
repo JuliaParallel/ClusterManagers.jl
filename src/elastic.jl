@@ -13,7 +13,8 @@ struct ElasticManager <: ClusterManager
     topology::Symbol
 
     function ElasticManager(;addr=IPv4("127.0.0.1"), port=9009, cookie=nothing, topology=:all_to_all)
-        cookie !== nothing && Base.cluster_cookie(cookie)
+        Distributed.init_multi()
+        cookie !== nothing && cluster_cookie(cookie)
 
         l_sock = listen(addr, port)
 
@@ -47,7 +48,7 @@ function process_worker_conn(mgr::ElasticManager, s::TCPSocket)
     if length(cookie) < HDR_COOKIE_LEN
         error("Cookie read failed. Connection closed by peer.")
     end
-    self_cookie = Base.cluster_cookie()
+    self_cookie = cluster_cookie()
     for i in 1:HDR_COOKIE_LEN
         if UInt8(self_cookie[i]) != cookie[i]
             println(i, " ", self_cookie[i], " ", cookie[i])
@@ -120,5 +121,5 @@ function elastic_worker(cookie, addr="127.0.0.1", port=9009; stdout_to_master=tr
     c = connect(addr, port)
     write(c, rpad(cookie, HDR_COOKIE_LEN)[1:HDR_COOKIE_LEN])
     stdout_to_master && redirect_stdout(c)
-    Base.start_worker(c, cookie)
+    start_worker(c, cookie)
 end
