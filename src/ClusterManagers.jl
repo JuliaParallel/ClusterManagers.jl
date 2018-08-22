@@ -1,18 +1,12 @@
-VERSION >= v"0.4.0-dev+6521" && __precompile__(true)
-
 module ClusterManagers
 
-using Compat
+using Distributed
+using Sockets
 
 export launch, manage, kill, init_worker, connect
-import Base: launch, manage, kill, init_worker, connect
+import Distributed: launch, manage, kill, init_worker, connect
 
-worker_arg = `--worker`
-
-function __init__()
-    global worker_arg
-    worker_arg = `--worker=$(Base.cluster_cookie())`
-end
+worker_arg() = `--worker=$(cluster_cookie())`
 
 # PBS doesn't have the same semantics as SGE wrt to file accumulate,
 # a different solution will have to be found

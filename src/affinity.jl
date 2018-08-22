@@ -4,7 +4,7 @@ export LocalAffinityManager, AffinityMode, COMPACT, BALANCED
 
 @enum AffinityMode COMPACT BALANCED
 
-type LocalAffinityManager <: ClusterManager
+mutable struct LocalAffinityManager <: ClusterManager
     affinities::Array{Int}
 
     function LocalAffinityManager(;np=CPU_CORES, mode::AffinityMode=BALANCED, affinities::Array{Int}=[])
@@ -35,7 +35,7 @@ function launch(manager::LocalAffinityManager, params::Dict, launched::Array, c:
 
     for core_id in manager.affinities
         io, pobj = open(detach(
-            setenv(`taskset -c $core_id $(Base.julia_cmd(exename)) $exeflags $worker_arg`, dir=dir)), "r")
+            setenv(`taskset -c $core_id $(Base.julia_cmd(exename)) $exeflags $(worker_arg())`, dir=dir)), "r")
         wconfig = WorkerConfig()
         wconfig.process = pobj
         wconfig.io = io

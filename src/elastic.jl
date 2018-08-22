@@ -4,11 +4,9 @@
 
 export ElasticManager, elastic_worker
 
-const HDR_COOKIE_LEN = (VERSION >= v"0.6.0-dev.2769") ? Base.Distributed.HDR_COOKIE_LEN : 
-                       (VERSION >= v"0.5.0-dev+4047") ? Base.HDR_COOKIE_LEN :
-                       0
+const HDR_COOKIE_LEN = Distributed.HDR_COOKIE_LEN
 
-type ElasticManager <: ClusterManager
+struct ElasticManager <: ClusterManager
     active::Dict{Int, WorkerConfig}        # active workers
     pending::Channel{TCPSocket}          # to be added workers
     terminated::Set{Int}             # terminated worker ids
@@ -21,14 +19,14 @@ type ElasticManager <: ClusterManager
 
         lman = new(Dict{Int, WorkerConfig}(), Channel{TCPSocket}(typemax(Int)), Set{Int}(), topology)
 
-        @schedule begin
+        @async begin
             while true
                 s = accept(l_sock)
-                @schedule process_worker_conn(lman, s)
+                @async process_worker_conn(lman, s)
             end
         end
 
-        @schedule process_pending_connections(lman)
+        @async process_pending_connections(lman)
 
         lman
     end
@@ -116,7 +114,7 @@ function Base.show(io::IO, mgr::ElasticManager)
 end
 
 # Does not return. If executing from a REPL try
-# @schedule connect_to_cluster(.....)
+# @async connect_to_cluster(.....)
 # addr, port that a ElasticManager on the master processes is listening on.
 function elastic_worker(cookie, addr="127.0.0.1", port=9009; stdout_to_master=true)
     c = connect(addr, port)
@@ -124,7 +122,3 @@ function elastic_worker(cookie, addr="127.0.0.1", port=9009; stdout_to_master=tr
     stdout_to_master && redirect_stdout(c)
     Base.start_worker(c, cookie)
 end
-
-
-
-
