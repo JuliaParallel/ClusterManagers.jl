@@ -22,8 +22,9 @@ struct ElasticManager <: ClusterManager
 
         @async begin
             while true
-                s = accept(l_sock)
-                @async process_worker_conn(lman, s)
+                let s = accept(l_sock)
+                    @async process_worker_conn(lman, s)
+                end
             end
         end
 
