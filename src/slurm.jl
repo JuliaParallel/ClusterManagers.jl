@@ -25,7 +25,7 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
                     push!(srunargs, "$(p[k])")
                 end
             else
-                k2 = replace(string(k), "_", "-")
+                k2 = replace(string(k), "_"=>"-")
                 val = p[k]
                 if length(val) > 0
                     push!(srunargs, "--$(k2)=$(p[k])")
