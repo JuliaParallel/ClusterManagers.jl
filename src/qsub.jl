@@ -57,7 +57,7 @@ function launch(manager::Union{PBSManager, SGEManager, QRSHManager},
               push!(instances_arr, config)
               notify(c)
           end
- 
+
         else  # PBS & SGE
 
             if params[:res_list] == ""
@@ -71,24 +71,20 @@ function launch(manager::Union{PBSManager, SGEManager, QRSHManager},
             qsub_cmd = pipeline(`echo $(Base.shell_escape(cmd))` , (isPBS ?
                     `qsub -N $jobname -j oe -k o -t 1-$np $queue $qsub_env $res_list` :
                     `qsub -N $jobname -terse -j y -R y -t 1-$np -V $res_list $queue $qsub_env`))
-            out,qsub_proc = open(qsub_cmd)
-            if !success(qsub_proc)
-                println("batch queue not available (could not run qsub)")
-                return
-            end
+            out = open(qsub_cmd)
             id = chomp(split(readline(out),'.')[1])
             if endswith(id, "[]")
                 id = id[1:end-2]
             end
 
             filenames(i) = "$home/julia-$(getpid()).o$id-$i","$home/julia-$(getpid())-$i.o$id","$home/julia-$(getpid()).o$id.$i"
-            
+
             print("job id is $id, waiting for job to start ")
             for i=1:np
                 # wait for each output stream file to get created
                 fnames = filenames(i)
                 j = 0
-                while (j=findfirst(x->isfile(x),fnames))==0
+                while (j=findfirst(x->isfile(x),fnames))==nothing
                     print(".")
                     sleep(1.0)
                 end
@@ -99,9 +95,9 @@ function launch(manager::Union{PBSManager, SGEManager, QRSHManager},
 
                 config = WorkerConfig()
 
-                config.io, io_proc = open(detach(cmd))
+                config.io = open(detach(cmd))
 
-                config.userdata = Dict{Symbol, Any}(:job=>id, :task=>i, :iofile=>fname, :process=>io_proc)
+                config.userdata = Dict{Symbol, Any}(:job=>id, :task=>i, :iofile=>fname)
                 push!(instances_arr, config)
                 notify(c)
             end
