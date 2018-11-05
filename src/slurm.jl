@@ -2,7 +2,7 @@
 
 export SlurmManager, addprocs_slurm
 
-immutable SlurmManager <: ClusterManager
+struct SlurmManager <: ClusterManager
     np::Integer
 end
 
@@ -13,8 +13,8 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
         exename = params[:exename]
         exeflags = params[:exeflags]
 
-        stdkeys = keys(Base.Distributed.default_addprocs_params())
-        p = filter((x,y) -> !(x in stdkeys), params)
+        stdkeys = keys(Distributed.default_addprocs_params())
+        p = filter(x->!(x[1] in stdkeys), params)
 
         srunargs = []
         for k in keys(p)
@@ -25,7 +25,7 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
                     push!(srunargs, "$(p[k])")
                 end
             else
-                k2 = replace(string(k), "_", "-")
+                k2 = replace(string(k), "_"=>"-")
                 val = p[k]
                 if length(val) > 0
                     push!(srunargs, "--$(k2)=$(p[k])")
@@ -36,12 +36,12 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
         end
 
         # cleanup old files
-        map(rm, filter(t -> ismatch(r"job.*\.out", t), readdir(exehome)))
+        map(rm, filter(t -> occursin(r"job.*\.out", t), readdir(exehome)))
 
         np = manager.np
         jobname = "julia-$(getpid())"
-        srun_cmd = `srun -J $jobname -n $np -o "job%4t.out" -D $exehome $(srunargs) $exename $exeflags $worker_arg`
-        out, srun_proc = open(srun_cmd)
+        srun_cmd = `srun -J $jobname -n $np -o "job%4t.out" -D $exehome $(srunargs) $exename $exeflags $(worker_arg())`
+        srun_proc = open(srun_cmd)
         for i = 0:np - 1
             print("connecting to worker $(i + 1) out of $np\r")
             local w=[]

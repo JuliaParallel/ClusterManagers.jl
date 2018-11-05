@@ -1,16 +1,16 @@
 export PBSManager, SGEManager, QRSHManager, addprocs_pbs, addprocs_sge, addprocs_qrsh
 
-immutable PBSManager <: ClusterManager
+struct PBSManager <: ClusterManager
     np::Integer
     queue::AbstractString
 end
 
-immutable SGEManager <: ClusterManager
+struct SGEManager <: ClusterManager
     np::Integer
     queue::AbstractString
 end
 
-immutable QRSHManager <: ClusterManager
+struct QRSHManager <: ClusterManager
     np::Integer
     queue::AbstractString
 end
@@ -53,7 +53,7 @@ function launch(manager::Union{PBSManager, SGEManager, QRSHManager},
         jobname = `julia-$(getpid())`
 
         if isa(manager, QRSHManager)
-          cmd = `cd $dir '&&' $exename $exeflags $worker_arg`
+          cmd = `cd $dir '&&' $exename $exeflags $(worker_arg())`
           qrsh_cmd = `qrsh $queue $qsub_env $res_list -V -N $jobname -now n "$cmd"`
 
           stream_proc = [open(qrsh_cmd) for i in 1:np]
@@ -65,40 +65,39 @@ function launch(manager::Union{PBSManager, SGEManager, QRSHManager},
               push!(instances_arr, config)
               notify(c)
           end
- 
-        else  # PBS & SGE
 
-            cmd = `cd $dir '&&' $exename $exeflags $worker_arg`
+        else  # PBS & SGE
+            cmd = `cd $dir '&&' $exename $exeflags $(worker_arg())`
             qsub_cmd = pipeline(`echo $(Base.shell_escape(cmd))` , (isPBS ?
                     `qsub -N $jobname -j oe -k o -t 1-$np $queue $qsub_env $res_list` :
                     `qsub -N $jobname -terse -j y -R y -t 1-$np -V $res_list $queue $qsub_env`))
-            out,qsub_proc = open(qsub_cmd)
-            if !success(qsub_proc)
-                println("batch queue not available (could not run qsub)")
-                return
-            end
+            out = open(qsub_cmd)
             id = chomp(split(readline(out),'.')[1])
             if endswith(id, "[]")
                 id = id[1:end-2]
             end
 
-            filename(i) = isPBS ? "$home/julia-$(getpid()).o$id-$i" : "$home/julia-$(getpid()).o$id.$i"
+            filenames(i) = "$home/julia-$(getpid()).o$id-$i","$home/julia-$(getpid())-$i.o$id","$home/julia-$(getpid()).o$id.$i"
+
             print("job id is $id, waiting for job to start ")
             for i=1:np
                 # wait for each output stream file to get created
-                fname = filename(i)
-                while !isfile(fname)
+                fnames = filenames(i)
+                j = 0
+                while (j=findfirst(x->isfile(x),fnames))==nothing
                     print(".")
                     sleep(1.0)
                 end
+                fname = fnames[j]
+
                 # Hack to get Base to get the host:port, the Julia process has already started.
                 cmd = `tail -f $fname`
 
                 config = WorkerConfig()
 
-                config.io, io_proc = open(detach(cmd))
+                config.io = open(detach(cmd))
 
-                config.userdata = Dict{Symbol, Any}(:job=>id, :task=>i, :iofile=>fname, :process=>io_proc)
+                config.userdata = Dict{Symbol, Any}(:job=>id, :task=>i, :iofile=>fname)
                 push!(instances_arr, config)
                 notify(c)
             end
