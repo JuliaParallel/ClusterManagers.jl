@@ -6,7 +6,9 @@ Support for different job queue systems commonly used on compute clusters.
 
 | Job queue system | Command to add processors |
 | ---------------- | ------------------------- |
+| Load Sharing Facility (LSF) | `addprocs_lsf(np::Integer, flags=``)` or `addprocs(LSFManager(np, flags))` |
 | Sun Grid Engine  | `addprocs_sge(np::Integer, queue="")` or `addprocs(SGEManager(np, queue))` |
+| SGE via qrsh | `addprocs_qrsh(np::Integer, queue="")` or `addprocs(QRSHManager(np, queue))` |
 | PBS              | `addprocs_pbs(np::Integer, queue="")` or `addprocs(PBSManager(np, queue))` |
 | Scyld | `addprocs_scyld(np::Integer)` or `addprocs(ScyldManager(np))` |
 | HTCondor | `addprocs_htc(np::Integer)` or `addprocs(HTCManager(np))` |
@@ -97,6 +99,20 @@ julia>  From worker 26: lum-7-2.local
         From worker 24: pace-6-11.local
         From worker 25: cheech-207-16.local
 ```
+
+### SGE via qrsh
+
+`SGEManager` uses SGE's `qsub` command to launch workers, which communicate the
+TCP/IP host:port info back to the master via the filesystem.  On filesystems
+that are tuned to make heavy use of caching to increase throughput, launching
+Julia workers can frequently timeout waiting for the standard output files to appear.
+In this case, it's better to use the `QRSHManager`, which uses SGE's `qrsh`
+command to bypass the filesystem and captures STDOUT directly.
+
+### Load Sharing Facility (LSF)
+
+`LSFManager` supports IBM's scheduler.  Similar to `QRSHManager` in that it
+uses the `-I` (i.e. interactive) flag to `bsub`.
 
 ### Using `LocalAffinityManager` (for pinning local workers to specific cores)
 
