@@ -7,16 +7,16 @@ export LocalAffinityManager, AffinityMode, COMPACT, BALANCED
 mutable struct LocalAffinityManager <: ClusterManager
     affinities::Array{Int}
 
-    function LocalAffinityManager(;np=CPU_CORES, mode::AffinityMode=BALANCED, affinities::Array{Int}=[])
+    function LocalAffinityManager(;np=Sys.CPU_THREADS, mode::AffinityMode=BALANCED, affinities::Array{Int}=[])
         assert(Sys.OS_NAME == :Linux)
 
         if length(affinities) == 0
             if mode == COMPACT
-                affinities = [i%CPU_CORES for i in 1:np]
+                affinities = [i%Sys.CPU_THREADS for i in 1:np]
             else
                 # mode == BALANCED
                 if np > 1
-                    affinities = [Int(floor(i)) for i in range(0, stop=CPU_CORES - 1e-3, length=np)]
+                    affinities = [Int(floor(i)) for i in range(0, stop=Sys.CPU_THREADS - 1e-3, length=np)]
                 else
                     affinities = [0]
                 end
