@@ -8,7 +8,7 @@ mutable struct LocalAffinityManager <: ClusterManager
     affinities::Array{Int}
 
     function LocalAffinityManager(;np=Sys.CPU_THREADS, mode::AffinityMode=BALANCED, affinities::Array{Int}=[])
-        @assert(Sys.OS_NAME == :Linux)
+        @assert(Sys.Sys.KERNEL == :Linux)
 
         if length(affinities) == 0
             if mode == COMPACT
