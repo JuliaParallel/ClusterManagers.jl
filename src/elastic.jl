@@ -11,6 +11,7 @@ struct ElasticManager <: ClusterManager
     pending::Channel{TCPSocket}          # to be added workers
     terminated::Set{Int}             # terminated worker ids
     topology::Symbol
+    sockname
 
     function ElasticManager(;addr=IPv4("127.0.0.1"), port=9009, cookie=nothing, topology=:all_to_all)
         Distributed.init_multi()
@@ -18,7 +19,7 @@ struct ElasticManager <: ClusterManager
 
         l_sock = listen(addr, port)
 
-        lman = new(Dict{Int, WorkerConfig}(), Channel{TCPSocket}(typemax(Int)), Set{Int}(), topology)
+        lman = new(Dict{Int, WorkerConfig}(), Channel{TCPSocket}(typemax(Int)), Set{Int}(), topology, getsockname(l_sock))
 
         @async begin
             while true
