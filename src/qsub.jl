@@ -40,13 +40,21 @@ function launch(manager::Union{PBSManager, SGEManager, QRSHManager},
         end
 
 
+        if params[:res_list] == ""
+            res_list = ``
+        else
+            evar = params[:res_list]
+            res_list = `-l $evar`
+        end
+
+
         np = manager.np
 
         jobname = `julia-$(getpid())`
 
         if isa(manager, QRSHManager)
           cmd = `cd $dir '&&' $exename $exeflags $(worker_arg())`
-          qrsh_cmd = `qrsh $queue $qsub_env -V -N $jobname -now n "$cmd"`
+          qrsh_cmd = `qrsh $queue $qsub_env $res_list -V -N $jobname -now n "$cmd"`
 
           stream_proc = [open(qrsh_cmd) for i in 1:np]
 
@@ -59,14 +67,6 @@ function launch(manager::Union{PBSManager, SGEManager, QRSHManager},
           end
 
         else  # PBS & SGE
-
-            if params[:res_list] == ""
-                res_list = ``
-            else
-                evar = params[:res_list]
-                res_list = `-l $evar`
-            end
-
             cmd = `cd $dir '&&' $exename $exeflags $(worker_arg())`
             qsub_cmd = pipeline(`echo $(Base.shell_escape(cmd))` , (isPBS ?
                     `qsub -N $jobname -j oe -k o -t 1-$np $queue $qsub_env $res_list` :
@@ -133,5 +133,5 @@ addprocs_pbs(np::Integer; queue::AbstractString="", qsub_env::AbstractString="",
 addprocs_sge(np::Integer; queue::AbstractString="", qsub_env::AbstractString="", res_list::AbstractString="") =
         addprocs(SGEManager(np, queue),qsub_env=qsub_env,res_list=res_list)
 
-addprocs_qrsh(np::Integer; queue::AbstractString="", qsub_env::AbstractString="") =
-        addprocs(QRSHManager(np, queue),qsub_env=qsub_env)
+addprocs_qrsh(np::Integer; queue::AbstractString="", qsub_env::AbstractString="", res_list::AbstractString="") =
+        addprocs(QRSHManager(np, queue),qsub_env=qsub_env,res_list=res_list)
