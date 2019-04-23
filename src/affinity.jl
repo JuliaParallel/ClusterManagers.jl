@@ -7,16 +7,16 @@ export LocalAffinityManager, AffinityMode, COMPACT, BALANCED
 mutable struct LocalAffinityManager <: ClusterManager
     affinities::Array{Int}
 
-    function LocalAffinityManager(;np=CPU_CORES, mode::AffinityMode=BALANCED, affinities::Array{Int}=[])
-        assert(Sys.OS_NAME == :Linux)
+    function LocalAffinityManager(;np=Sys.CPU_THREADS, mode::AffinityMode=BALANCED, affinities::Array{Int}=[])
+        @assert(Sys.Sys.KERNEL == :Linux)
 
         if length(affinities) == 0
             if mode == COMPACT
-                affinities = [i%CPU_CORES for i in 1:np]
+                affinities = [i%Sys.CPU_THREADS for i in 1:np]
             else
                 # mode == BALANCED
                 if np > 1
-                    affinities = [Int(floor(i)) for i in range(0, stop=CPU_CORES - 1e-3, length=np)]
+                    affinities = [Int(floor(i)) for i in range(0, stop=Sys.CPU_THREADS - 1e-3, length=np)]
                 else
                     affinities = [0]
                 end
@@ -34,11 +34,11 @@ function launch(manager::LocalAffinityManager, params::Dict, launched::Array, c:
     exeflags = params[:exeflags]
 
     for core_id in manager.affinities
-        io, pobj = open(detach(
+        io = open(detach(
             setenv(`taskset -c $core_id $(Base.julia_cmd(exename)) $exeflags $(worker_arg())`, dir=dir)), "r")
         wconfig = WorkerConfig()
-        wconfig.process = pobj
-        wconfig.io = io
+        wconfig.process = io
+        wconfig.io = io.out
         push!(launched, wconfig)
     end
 
