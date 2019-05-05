@@ -16,7 +16,7 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
         exeflags = params[:exeflags]
 
         stdkeys = keys(Distributed.default_addprocs_params())
-        p = filter(x->!(x[1] in stdkeys), params)
+        p = filter(x->!(x[1] in stdkeys) && x[1] != :job_file_loc, params)
 
         srunargs = []
         for k in keys(p)
@@ -45,8 +45,11 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
             mkdir(job_file_loc)
         end
 
+        @debug "removing old files"
         # cleanup old files
         map(rm, filter(t -> occursin(r"job(.*?).out", readdir(job_file_loc))))
+
+        @debug "removing old Setting up srun commands"
 
         np = manager.np
         jobname = "julia-$(getpid())"
