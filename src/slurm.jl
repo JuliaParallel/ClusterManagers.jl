@@ -38,7 +38,7 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
         end
 
         # Get job file location from parameter dictionary.
-        job_file_loc = get(params, :job_file_loc, ".")
+        job_file_loc = joinpath(exehome, get(params, :job_file_loc, "."))
 
         # Make directory if not already made.
         if !isdir(job_file_loc)
@@ -46,7 +46,7 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
         end
 
         # cleanup old files
-        map(rm, filter(t -> occursin(Regex(joinpath(job_file_loc, "job.*\.out")), t), readdir(exehome)))
+        map(rm, filter(t -> occursin(r"job(.*?).out", readdir(job_file_loc))))
 
         np = manager.np
         jobname = "julia-$(getpid())"
@@ -92,5 +92,4 @@ function manage(manager::SlurmManager, id::Integer, config::WorkerConfig,
     # This function needs to exist, but so far we don't do anything
 end
 
-addprocs_slurm(np::Integer; kwargs...) = addprocs(SlurmManager(np);
-                                                  kwargs...)
+addprocs_slurm(np::Integer; kwargs...) = addprocs(SlurmManager(np); kwargs...)
