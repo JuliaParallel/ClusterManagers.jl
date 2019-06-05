@@ -2,11 +2,11 @@
 
 export SlurmManager, addprocs_slurm
 
+import Logging.@warn
+
 struct SlurmManager <: ClusterManager
     np::Integer
 end
-
-
 
 function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
                 c::Condition)
@@ -16,9 +16,13 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
         exeflags = params[:exeflags]
 
         stdkeys = keys(Distributed.default_addprocs_params())
+
 	println(stdkeys)
-        p = filter(x->!(x[1] in stdkeys) && x[1] != :job_file_loc, params)
+        p = filter(x->(!(x[1] in stdkeys) && x[1] != :job_file_loc), params)
 	println(p)
+
+
+
         srunargs = []
         for k in keys(p)
             if length(string(k)) == 1
@@ -46,24 +50,23 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
             mkdir(job_file_loc)
         end
 
-        @debug "removing old files"
+        println("removing old files")
         # cleanup old files
-        map(rm, filter(t -> occursin(r"job(.*?).out", readdir(job_file_loc))))
-
-        @debug "removing old Setting up srun commands"
+	map(f->rm(joinpath(job_file_loc, f)), filter(t -> occursin(r"job(.*?).out", t), readdir(job_file_loc)))
+        println("removing old Setting up srun commands")
 
         np = manager.np
         jobname = "julia-$(getpid())"
-        srun_cmd = `srun -J $jobname -n $np -o "$(joinpath(job_file_loc, job%4t.out))" -D $exehome $(srunargs) $exename $exeflags $(worker_arg())`
+        srun_cmd = `srun -J $jobname -n $np -o "$(joinpath(job_file_loc, "job%4t.out"))" -D $exehome $(srunargs) $exename $exeflags $(worker_arg())`
         srun_proc = open(srun_cmd)
         for i = 0:np - 1
             print("connecting to worker $(i + 1) out of $np\r")
             local w=[]
-            fn = "$exehome/job$(lpad(i, 4, "0")).out"
+            fn = "$(joinpath(exehome, job_file_loc))/job$(lpad(i, 4, "0")).out"
             t0 = time()
             while true
                 if time() > t0 + 60 + np
-                    warn("dropping worker: file not created in $(60 + np) seconds")
+                    @warn "dropping worker: file not created in $(60 + np) seconds"
                     break
                 end
                 sleep(0.001)
