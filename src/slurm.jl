@@ -16,8 +16,7 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
         exeflags = params[:exeflags]
 
         stdkeys = keys(Distributed.default_addprocs_params())
-        p = filter(x->!(x[1] in stdkeys) && x[1] != :job_file_loc, params)
-
+        p = filter(x->(!(x[1] in stdkeys) && x[1] != :job_file_loc), params)
         srunargs = []
         for k in keys(p)
             if length(string(k)) == 1
