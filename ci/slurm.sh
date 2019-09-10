@@ -14,11 +14,11 @@ function jobqueue_before_install {
 }
 
 function jobqueue_install {
-    docker exec -it slurmctld /bin/bash -c "cd /dask-jobqueue; pip install -e ."
+    docker exec -it slurmctld /bin/bash -c "cd /workspace; julia --project -e 'using Pkg; Pkg.build();"
 }
 
 function jobqueue_script {
-    docker exec -it slurmctld /bin/bash -c "cd /dask-jobqueue; pytest dask_jobqueue --verbose -E slurm"
+    docker exec -it slurmctld /bin/bash -c "cd /workspace; julia --project test/runtests.jl slurm"
 }
 
 function jobqueue_after_script {
