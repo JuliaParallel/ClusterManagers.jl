@@ -4,10 +4,10 @@ notifications:
 sudo: required
 
 matrix:
-  - include:
-    - julia: 1.0
-      env:
-        - JOBQUEUE=slurm
+  include:
+  - julia: 1.0
+    env:
+    - JOBQUEUE=slurm
 
 services: docker
 before_install:
