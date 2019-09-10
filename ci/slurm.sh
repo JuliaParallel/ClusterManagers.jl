@@ -5,7 +5,7 @@ function jobqueue_before_install {
     docker-compose version
 
     # start slurm cluster
-    pushd./ci/slurm
+    pushd ./ci/slurm
     ./start-slurm.sh
     popd
 
