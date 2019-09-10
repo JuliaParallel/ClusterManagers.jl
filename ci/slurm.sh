@@ -14,7 +14,7 @@ function jobqueue_before_install {
 }
 
 function jobqueue_install {
-    docker exec -it slurmctld /bin/bash -c "cd /workspace; julia --project -e 'using Pkg; Pkg.build();"
+    docker exec -it slurmctld /bin/bash -c "cd /workspace; julia --project -e 'using Pkg; Pkg.build();'"
 }
 
 function jobqueue_script {
