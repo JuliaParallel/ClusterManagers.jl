@@ -60,7 +60,7 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
         srun_cmd = `srun -J $jobname -n $np -o "$(joinpath(job_file_loc, "job%4t.out"))" -D $exehome $(srunargs) $exename $exeflags $(worker_arg())`
         srun_proc = open(srun_cmd)
         for i = 0:np - 1
-            print("connecting to worker $(i + 1) out of $np\r")
+            println("connecting to worker $(i + 1) out of $np")
             local w=[]
             fn = "$(joinpath(exehome, job_file_loc))/job$(lpad(i, 4, "0")).out"
             t0 = time()
