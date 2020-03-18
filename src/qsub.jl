@@ -149,7 +149,7 @@ end
 addprocs_pbs(np::Integer; queue::AbstractString="", qsub_env::AbstractString="", res_list::AbstractString="") =
         addprocs(PBSManager(np, queue),qsub_env=qsub_env,res_list=res_list)
 
-addprocs_pbs(np::Integer; queue::AbstractString="", qsub_env::AbstractString="", res_list::AbstractString="") =
+addprocs_pbspro(np::Integer; queue::AbstractString="", qsub_env::AbstractString="", res_list::AbstractString="") =
         addprocs(PBSProManager(np, queue),qsub_env=qsub_env,res_list=res_list)
 
 addprocs_sge(np::Integer; queue::AbstractString="", qsub_env::AbstractString="", res_list::AbstractString="") =
