@@ -1,6 +1,11 @@
-export PBSManager, SGEManager, QRSHManager, addprocs_pbs, addprocs_sge, addprocs_qrsh
+export PBSManager, PBSProManager, SGEManager, QRSHManager, addprocs_pbs, addprocs_sge, addprocs_qrsh
 
 struct PBSManager <: ClusterManager
+    np::Integer
+    queue::AbstractString
+end
+
+struct PBSProManager <: ClusterManager
     np::Integer
     queue::AbstractString
 end
@@ -15,7 +20,7 @@ struct QRSHManager <: ClusterManager
     queue::AbstractString
 end
 
-function launch(manager::Union{PBSManager, SGEManager, QRSHManager},
+function launch(manager::Union{PBSManager, PBSProManager, SGEManager, QRSHManager},
         params::Dict, instances_arr::Array, c::Condition)
     try
         dir = params[:dir]
@@ -23,6 +28,7 @@ function launch(manager::Union{PBSManager, SGEManager, QRSHManager},
         exeflags = params[:exeflags]
         home = ENV["HOME"]
         isPBS = isa(manager, PBSManager)
+        isPBSPro = isa(manager, PBSProManager)
 
         if manager.queue == ""
             queue = ``
@@ -66,11 +72,24 @@ function launch(manager::Union{PBSManager, SGEManager, QRSHManager},
               notify(c)
           end
 
-        else  # PBS & SGE
+        else  # PBS, PBSPro, and SGE
             cmd = `cd $dir '&&' $exename $exeflags $(worker_arg())`
-            qsub_cmd = pipeline(`echo $(Base.shell_escape(cmd))` , (isPBS ?
-                    `qsub -N $jobname -j oe -k o -t 1-$np $queue $qsub_env $res_list` :
-                    `qsub -N $jobname -terse -j y -R y -t 1-$np -V $res_list $queue $qsub_env`))
+            qsub_cmd = if isPBS
+                pipeline(
+                    `echo $(Base.shell_escape(cmd))` ,
+                    `qsub -N $jobname -j oe -k o -t 1-$np $queue $qsub_env $res_list`
+                )
+            elseif isPBSPro
+                pipeline(
+                    `echo $(Base.shell_escape(cmd))` ,
+                    `qsub -N $jobname -j oe -k o -J 1-$np $queue $qsub_env $res_list`
+                )
+            else # SGE
+                pipeline(
+                    `echo $(Base.shell_escape(cmd))` ,
+                    `qsub -N $jobname -terse -j y -R y -t 1-$np -V $res_list $queue $qsub_env`
+                )
+            end
             out = open(qsub_cmd)
             id = chomp(split(readline(out),'.')[1])
             if endswith(id, "[]")
@@ -110,11 +129,11 @@ function launch(manager::Union{PBSManager, SGEManager, QRSHManager},
     end
 end
 
-function manage(manager::Union{PBSManager, SGEManager, QRSHManager},
+function manage(manager::Union{PBSManager, PBSProManager, SGEManager, QRSHManager},
         id::Int64, config::WorkerConfig, op::Symbol)
 end
 
-function kill(manager::Union{PBSManager, SGEManager, QRSHManager}, id::Int64, config::WorkerConfig)
+function kill(manager::Union{PBSManager, PBSProManager, SGEManager, QRSHManager}, id::Int64, config::WorkerConfig)
     remotecall(exit,id)
     close(get(config.io))
 
@@ -129,6 +148,9 @@ end
 
 addprocs_pbs(np::Integer; queue::AbstractString="", qsub_env::AbstractString="", res_list::AbstractString="") =
         addprocs(PBSManager(np, queue),qsub_env=qsub_env,res_list=res_list)
+
+addprocs_pbs(np::Integer; queue::AbstractString="", qsub_env::AbstractString="", res_list::AbstractString="") =
+        addprocs(PBSProManager(np, queue),qsub_env=qsub_env,res_list=res_list)
 
 addprocs_sge(np::Integer; queue::AbstractString="", qsub_env::AbstractString="", res_list::AbstractString="") =
         addprocs(SGEManager(np, queue),qsub_env=qsub_env,res_list=res_list)
