@@ -6,7 +6,7 @@ Support for different job queue systems commonly used on compute clusters.
 
 | Job queue system | Command to add processors |
 | ---------------- | ------------------------- |
-| Load Sharing Facility (LSF) | `addprocs_lsf(np::Integer, flags=``)` or `addprocs(LSFManager(np, flags))` |
+| Load Sharing Facility (LSF) | `addprocs_lsf(np::Integer; bsub_flags=``, ssh_cmd=``)` or `addprocs(LSFManager(np, bsub_flags, ssh_cmd))` |
 | Sun Grid Engine  | `addprocs_sge(np::Integer, queue="")` or `addprocs(SGEManager(np, queue))` |
 | SGE via qrsh | `addprocs_qrsh(np::Integer, queue="")` or `addprocs(QRSHManager(np, queue))` |
 | PBS              | `addprocs_pbs(np::Integer, queue="")` or `addprocs(PBSManager(np, queue))` |
@@ -112,7 +112,8 @@ command to bypass the filesystem and captures STDOUT directly.
 ### Load Sharing Facility (LSF)
 
 `LSFManager` supports IBM's scheduler.  Similar to `QRSHManager` in that it
-uses the `-I` (i.e. interactive) flag to `bsub`.
+uses the `-I` (i.e. interactive) flag to `bsub`.  See the `addprocs_lsf` docstring
+for more information.
 
 ### Using `LocalAffinityManager` (for pinning local workers to specific cores)
 
