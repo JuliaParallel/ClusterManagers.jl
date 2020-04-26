@@ -6,7 +6,7 @@ Support for different job queue systems commonly used on compute clusters.
 
 | Job queue system | Command to add processors |
 | ---------------- | ------------------------- |
-| Load Sharing Facility (LSF) | `addprocs_lsf(np::Integer; bsub_flags=``, ssh_cmd=``)` or `addprocs(LSFManager(np, bsub_flags, ssh_cmd, retry_delays))` |
+| Load Sharing Facility (LSF) | `addprocs_lsf(np::Integer; bsub_flags=``, ssh_cmd=``)` or `addprocs(LSFManager(np, bsub_flags, ssh_cmd, retry_delays, throttle))` |
 | Sun Grid Engine  | `addprocs_sge(np::Integer, queue="")` or `addprocs(SGEManager(np, queue))` |
 | SGE via qrsh | `addprocs_qrsh(np::Integer, queue="")` or `addprocs(QRSHManager(np, queue))` |
 | PBS              | `addprocs_pbs(np::Integer, queue="")` or `addprocs(PBSManager(np, queue))` |
