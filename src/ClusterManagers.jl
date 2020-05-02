@@ -2,6 +2,7 @@ module ClusterManagers
 
 using Distributed
 using Sockets
+using Pkg
 
 export launch, manage, kill, init_worker, connect
 import Distributed: launch, manage, kill, init_worker, connect

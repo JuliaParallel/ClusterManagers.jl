@@ -12,14 +12,19 @@ struct ElasticManager <: ClusterManager
     terminated::Set{Int}             # terminated worker ids
     topology::Symbol
     sockname
+    printing_kwargs
 
-    function ElasticManager(;addr=IPv4("127.0.0.1"), port=9009, cookie=nothing, topology=:all_to_all)
+    function ElasticManager(;addr=IPv4("127.0.0.1"), port=9009, cookie=nothing, topology=:all_to_all, printing_kwargs=())
         Distributed.init_multi()
         cookie !== nothing && cluster_cookie(cookie)
 
+        if addr == :auto
+            addr = get_private_ip()
+        end
+        
         l_sock = listen(addr, port)
 
-        lman = new(Dict{Int, WorkerConfig}(), Channel{TCPSocket}(typemax(Int)), Set{Int}(), topology, getsockname(l_sock))
+        lman = new(Dict{Int, WorkerConfig}(), Channel{TCPSocket}(typemax(Int)), Set{Int}(), topology, getsockname(l_sock), printing_kwargs)
 
         @async begin
             while true
@@ -113,6 +118,9 @@ function Base.show(io::IO, mgr::ElasticManager)
     seek(iob, position(iob)-1)
     println(iob, "]")
 
+    println(iob, "  Worker connect command : ")
+    print(iob, "    ", get_connect_cmd(mgr; mgr.printing_kwargs...))
+    
     print(io, String(take!(iob)))
 end
 
@@ -124,4 +132,29 @@ function elastic_worker(cookie, addr="127.0.0.1", port=9009; stdout_to_master=tr
     write(c, rpad(cookie, HDR_COOKIE_LEN)[1:HDR_COOKIE_LEN])
     stdout_to_master && redirect_stdout(c)
     start_worker(c, cookie)
+end
+
+
+function get_private_ip()
+    if Sys.islinux()
+        IPv4(strip(read(`hostname --ip-address`, String)))
+    else
+        error("addr=:auto is only supported on Linux")
+    end
+end
+
+function get_connect_cmd(em::ElasticManager; absolute_exename=true, same_project=true)
+    
+    ip = string(em.sockname[1])
+    port = convert(Int,em.sockname[2])
+    cookie = cluster_cookie()
+    exename = absolute_exename ? joinpath(Sys.BINDIR, Base.julia_exename()) : "julia"
+    project = same_project ? ("--project=$(Pkg.API.Context().env.project_file)",) : ()
+    
+    join([
+        exename,
+        project...,
+        "-e 'using ClusterManagers; ClusterManagers.elastic_worker(\"$cookie\",\"$ip\",$port)'"
+    ]," ")
+    
 end
