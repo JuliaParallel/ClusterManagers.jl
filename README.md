@@ -145,7 +145,7 @@ ElasticManager(addr, port) = ElasticManager(;addr=addr, port=port)
 ElasticManager(addr, port, cookie) = ElasticManager(;addr=addr, port=port, cookie=cookie)
 ```
 
-On Linux, you can set `addr=:auto` to automatically use the host's private IP address on the local network, which will allow other workers on this network to connect. You can also use `port=0` to let the OS choose a random free port for you (some systems may not support this). Once created, printing the `ElasticManager` object prints the command which you can run on workers to connect them to the master, e.g.:
+On Linux and Mac, you can set `addr=:auto` to automatically use the host's private IP address on the local network, which will allow other workers on this network to connect. You can also use `port=0` to let the OS choose a random free port for you (some systems may not support this). Once created, printing the `ElasticManager` object prints the command which you can run on workers to connect them to the master, e.g.:
 
 ```julia
 julia> em = ElasticManager(addr=:auto, port=0)

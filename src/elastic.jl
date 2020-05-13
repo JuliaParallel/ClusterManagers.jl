@@ -137,9 +137,19 @@ end
 
 function get_private_ip()
     if Sys.islinux()
-        IPv4(strip(read(`hostname --ip-address`, String)))
+        cmd = `hostname --ip-address`
+    elseif Sys.isapple()
+        cmd = `ipconfig getifaddr en0`
     else
-        error("addr=:auto is only supported on Linux")
+        error("`addr=:auto` is only supported on Linux and Mac")
+    end
+    try
+        return IPv4(first(split(strip(read(cmd, String)))))
+    catch err
+        error("""Failed to automatically get host's IP address (output below). Please specify `addr=` explicitly.
+        \$ $(repr(cmd))
+        $err
+        """)
     end
 end
 
