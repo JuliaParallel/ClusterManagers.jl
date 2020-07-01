@@ -66,7 +66,7 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
         for i = 0:np - 1
             println("connecting to worker $(i + 1) out of $np")
             local slurm_spec_match = nothing
-            fn = "$(joinpath(exehome, job_file_loc))/job-$jobID-$(lpad(i, 4, "0")).out"
+            fn = make_job_output_path(lpad(i, 4, "0"))
             t0 = time()
             while true
                 slurm_spec_match = open(fn) do f
