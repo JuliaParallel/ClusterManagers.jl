@@ -57,37 +57,38 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
 
         np = manager.np
         jobname = "julia-$(getpid())"
-		jobID = String(ENV["SLURM_JOB_ID"])
-        srun_cmd = `srun -J $jobname -n $np -o "$(joinpath(job_file_loc, "job-$jobID-%4t.out"))" -D $exehome $(srunargs) $exename $exeflags $(worker_arg())`
+        job_output_name = "$(jobname)-$(trunc(Int, Base.time() * 10))"
+        make_job_output_path(task_num) = joinpath(job_file_loc, "$(job_output_name)-$(task_num).out")
+        job_output_template = make_job_output_path("%4t")
+        srun_cmd = `srun -J $jobname -n $np -o "$(job_output_template)" -D $exehome $(srunargs) $exename $exeflags $(worker_arg())`
         srun_proc = open(srun_cmd)
+        slurm_spec_regex = r"([\w]+):([\d]+)#(\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})"
         for i = 0:np - 1
             println("connecting to worker $(i + 1) out of $np")
-            local w=[]
+            local slurm_spec_match = nothing
             fn = "$(joinpath(exehome, job_file_loc))/job-$jobID-$(lpad(i, 4, "0")).out"
             t0 = time()
             while true
-                if time() > t0 + 60 + np
-                    @warn "dropping worker: file not created in $(60 + np) seconds"
-                    break
-                end
-                sleep(0.001)
-                if isfile(fn) && filesize(fn) > 0
-                    w = open(fn) do f
-                        return split(split(readline(f), ":")[2], "#")
+                slurm_spec_match = open(fn) do f
+                    for line in eachline(f)
+                        re_match = match(slurm_spec_regex, line)
+                        if re_match !== nothing
+                            return re_match
+                        end
                     end
+                end
+                if slurm_spec_match !== nothing
                     break
                 end
             end
-            if length(w) > 0
-                config = WorkerConfig()
-                config.port = parse(Int, w[1])
-                config.host = strip(w[2])
-                # Keep a reference to the proc, so it's properly closed once
-                # the last worker exits.
-                config.userdata = srun_proc
-                push!(instances_arr, config)
-                notify(c)
-            end
+            config = WorkerConfig()
+            config.port = parse(Int, slurm_spec_match[2])
+            config.host = strip(slurm_spec_match[3])
+            # Keep a reference to the proc, so it's properly closed once
+            # the last worker exits.
+            config.userdata = srun_proc
+            push!(instances_arr, config)
+            notify(c)
         end
     catch e
         println("Error launching Slurm job:")
