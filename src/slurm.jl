@@ -50,10 +50,9 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
             mkdir(job_file_loc)
         end
 
-        println("removing old files")
+        # println("removing old files")
         # cleanup old files
-	map(f->rm(joinpath(job_file_loc, f)), filter(t -> occursin(r"job(.*?).out", t), readdir(job_file_loc)))
-        println("removing old Setting up srun commands")
+	    # map(f->rm(joinpath(job_file_loc, f)), filter(t -> occursin(r"job(.*?).out", t), readdir(job_file_loc)))
 
         np = manager.np
         jobname = "julia-$(getpid())"
