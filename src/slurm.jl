@@ -69,16 +69,18 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
             fn = make_job_output_path(lpad(i, 4, "0"))
             t0 = time()
             while true
-                slurm_spec_match = open(fn) do f
-                    for line in eachline(f)
-                        re_match = match(slurm_spec_regex, line)
-                        if re_match !== nothing
-                            return re_match
+                if isfile(fn) && filesize(fn) > 0
+                    slurm_spec_match = open(fn) do f
+                        for line in eachline(f)
+                            re_match = match(slurm_spec_regex, line)
+                            if re_match !== nothing
+                                return re_match
+                            end
                         end
                     end
-                end
-                if slurm_spec_match !== nothing
-                    break
+                    if slurm_spec_match !== nothing
+                        break
+                    end
                 end
             end
             config = WorkerConfig()
