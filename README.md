@@ -19,7 +19,7 @@ You can also write your own custom cluster manager; see the instructions in the 
 
 ### Slurm: a simple example
 
-```jl
+```julia
 using ClusterManagers
 
 # Arguments to the Slurm srun(1) command can be given as keyword
@@ -52,7 +52,7 @@ end
 
 ### SGE - a simple interactive example
 
-```jl
+```julia
 julia> using ClusterManagers
 
 julia> ClusterManagers.addprocs_sge(5)
@@ -79,7 +79,7 @@ julia>  From worker 2:  compute-6
 
 Some clusters require the user to specify a list of required resources. For example, it may be necessary to specify how much memory will be needed by the job - see this [issue](https://github.com/JuliaLang/julia/issues/10390).
 
-```jl
+```julia
 julia> using ClusterManagers
 
 julia> addprocs_sge(5,res_list="h_vmem=4G,tmem=4G")
@@ -136,36 +136,27 @@ The `ElasticManager` is useful in scenarios where we want to dynamically add wor
 It achieves this by listening on a known port on the master. The launched workers connect to this
 port and publish their own host/port information for other workers to connect to.
 
-##### Usage
-
 On the master, you need to instantiate an instance of `ElasticManager`. The constructors defined are:
-```jl
-ElasticManager(;addr=IPv4("127.0.0.1"), port=9009, cookie=nothing, topology=:all_to_all)
+
+```julia
+ElasticManager(;addr=IPv4("127.0.0.1"), port=9009, cookie=nothing, topology=:all_to_all, printing_kwargs=())
 ElasticManager(port) = ElasticManager(;port=port)
 ElasticManager(addr, port) = ElasticManager(;addr=addr, port=port)
 ElasticManager(addr, port, cookie) = ElasticManager(;addr=addr, port=port, cookie=cookie)
 ```
 
-On the worker, you need to call `ClusterManagers.elastic_worker` with the addr/port that the master
-is listening on and the same cookie. `elastic_worker` is defined as:
-```
-ClusterManagers.elastic_worker(cookie, addr="127.0.0.1", port=9009; stdout_to_master=true)
-```
+On Linux and Mac, you can set `addr=:auto` to automatically use the host's private IP address on the local network, which will allow other workers on this network to connect. You can also use `port=0` to let the OS choose a random free port for you (some systems may not support this). Once created, printing the `ElasticManager` object prints the command which you can run on workers to connect them to the master, e.g.:
 
-For example, on the master:
-
-```jl
-using ClusterManagers
-em=ElasticManager(cookie="foobar")
-```
-
-and launch each worker locally as
-`echo "using ClusterManagers; ClusterManagers.elastic_worker(\"foobar\")" | julia  &`
-
-or if you want a REPL on the worker, you can start a julia process normally and manually enter
-```jl
-using ClusterManagers
-@schedule ClusterManagers.elastic_worker("foobar", "addr_of_master", port_of_master; stdout_to_master=false)
+```julia
+julia> em = ElasticManager(addr=:auto, port=0)
+ElasticManager:
+  Active workers : []
+  Number of workers to be added  : 0
+  Terminated workers : []
+  Worker connect command : 
+    /home/user/bin/julia --project=/home/user/myproject/Project.toml -e 'using ClusterManagers; ClusterManagers.elastic_worker("4cOSyaYpgSl6BC0C","127.0.1.1",36275)'
 ```
 
-The above will yield back the REPL prompt and also display any printed output locally.
+By default, the printed command uses the absolute path to the current Julia executable and activates the same project as the current session. You can change either of these defaults by passing `printing_kwargs=(absolute_exename=false, same_project=false))` to the first form of the `ElasticManager` constructor. 
+
+Once workers are connected, you can print the `em` object again to see them added to the list of active workers. 
