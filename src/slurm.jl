@@ -56,7 +56,7 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
         slurm_spec_regex = r"([\w]+):([\d]+)#(\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})"
         for i = 0:np - 1
             println("connecting to worker $(i + 1) out of $np")
-            local slurm_spec_match = nothing
+            slurm_spec_match = nothing
             fn = make_job_output_path(lpad(i, 4, "0"))
             t0 = time()
             while true
