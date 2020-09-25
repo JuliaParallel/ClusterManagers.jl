@@ -17,11 +17,7 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
 
         stdkeys = keys(Distributed.default_addprocs_params())
 
-	println(stdkeys)
         p = filter(x->(!(x[1] in stdkeys) && x[1] != :job_file_loc), params)
-	println(p)
-
-
 
         srunargs = []
         for k in keys(p)
@@ -49,10 +45,6 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
         if !isdir(job_file_loc)
             mkdir(job_file_loc)
         end
-
-        # println("removing old files")
-        # cleanup old files
-	    # map(f->rm(joinpath(job_file_loc, f)), filter(t -> occursin(r"job(.*?).out", t), readdir(job_file_loc)))
 
         np = manager.np
         jobname = "julia-$(getpid())"
