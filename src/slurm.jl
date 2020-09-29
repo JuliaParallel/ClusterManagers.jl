@@ -60,17 +60,20 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
             fn = make_job_output_path(lpad(i, 4, "0"))
             t0 = time()
             while true
+                # Wait for output log to be created and populated, then parse
                 if isfile(fn) && filesize(fn) > 0
                     slurm_spec_match = open(fn) do f
+                        # Due to error and warning messages, the specification
+                        # may not appear on the file's first line
                         for line in eachline(f)
                             re_match = match(slurm_spec_regex, line)
                             if re_match !== nothing
-                                return re_match
+                                return re_match    # only returns from do-block
                             end
                         end
                     end
                     if slurm_spec_match !== nothing
-                        break
+                        break   # break if specification found
                     end
                 end
             end
