@@ -17,11 +17,7 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
 
         stdkeys = keys(Distributed.default_addprocs_params())
 
-	println(stdkeys)
         p = filter(x->(!(x[1] in stdkeys) && x[1] != :job_file_loc), params)
-	println(p)
-
-
 
         srunargs = []
         for k in keys(p)
@@ -50,44 +46,45 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
             mkdir(job_file_loc)
         end
 
-        println("removing old files")
-        # cleanup old files
-	map(f->rm(joinpath(job_file_loc, f)), filter(t -> occursin(r"job(.*?).out", t), readdir(job_file_loc)))
-        println("removing old Setting up srun commands")
-
         np = manager.np
         jobname = "julia-$(getpid())"
-		jobID = String(ENV["SLURM_JOB_ID"])
-        srun_cmd = `srun -J $jobname -n $np -o "$(joinpath(job_file_loc, "job-$jobID-%4t.out"))" -D $exehome $(srunargs) $exename $exeflags $(worker_arg())`
+        job_output_name = "$(jobname)-$(trunc(Int, Base.time() * 10))"
+        make_job_output_path(task_num) = joinpath(job_file_loc, "$(job_output_name)-$(task_num).out")
+        job_output_template = make_job_output_path("%4t")
+        srun_cmd = `srun -J $jobname -n $np -o "$(job_output_template)" -D $exehome $(srunargs) $exename $exeflags $(worker_arg())`
         srun_proc = open(srun_cmd)
+        slurm_spec_regex = r"([\w]+):([\d]+)#(\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})"
         for i = 0:np - 1
             println("connecting to worker $(i + 1) out of $np")
-            local w=[]
-            fn = "$(joinpath(exehome, job_file_loc))/job-$jobID-$(lpad(i, 4, "0")).out"
+            slurm_spec_match = nothing
+            fn = make_job_output_path(lpad(i, 4, "0"))
             t0 = time()
             while true
-                if time() > t0 + 60 + np
-                    @warn "dropping worker: file not created in $(60 + np) seconds"
-                    break
-                end
-                sleep(0.001)
+                # Wait for output log to be created and populated, then parse
                 if isfile(fn) && filesize(fn) > 0
-                    w = open(fn) do f
-                        return split(split(readline(f), ":")[2], "#")
+                    slurm_spec_match = open(fn) do f
+                        # Due to error and warning messages, the specification
+                        # may not appear on the file's first line
+                        for line in eachline(f)
+                            re_match = match(slurm_spec_regex, line)
+                            if re_match !== nothing
+                                return re_match    # only returns from do-block
+                            end
+                        end
                     end
-                    break
+                    if slurm_spec_match !== nothing
+                        break   # break if specification found
+                    end
                 end
             end
-            if length(w) > 0
-                config = WorkerConfig()
-                config.port = parse(Int, w[1])
-                config.host = strip(w[2])
-                # Keep a reference to the proc, so it's properly closed once
-                # the last worker exits.
-                config.userdata = srun_proc
-                push!(instances_arr, config)
-                notify(c)
-            end
+            config = WorkerConfig()
+            config.port = parse(Int, slurm_spec_match[2])
+            config.host = strip(slurm_spec_match[3])
+            # Keep a reference to the proc, so it's properly closed once
+            # the last worker exits.
+            config.userdata = srun_proc
+            push!(instances_arr, config)
+            notify(c)
         end
     catch e
         println("Error launching Slurm job:")
