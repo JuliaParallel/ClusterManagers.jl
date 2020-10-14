@@ -19,5 +19,6 @@ include("slurm.jl")
 include("affinity.jl")
 include("elastic.jl")
 include("lsf.jl")
+include("existing.jl")
 
 end
