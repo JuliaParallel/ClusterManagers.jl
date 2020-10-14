@@ -1,5 +1,7 @@
 import Distributed
 
+export ExistingProcessManager
+
 struct ExistingProcessManager <: Distributed.ClusterManager
     wconfigs::Vector{Distributed.WorkerConfig}
 end
