@@ -53,5 +53,5 @@ jobs:
          #SBATCH --time=00:10:00
          /julia/bin/julia --project=/SlurmTools -e 'using Pkg; Pkg.test(test_args=["slurm"])'
          EOF
-         docker exec slurm-$SLURM sbatch --wait /SlurmTools/sbatch.sh
-        
+         docker exec slurm-$SLURM sbatch --wait --output=/SlurmTools/output --error=/SlurmTools/output /SlurmTools/sbatch.sh
+         cat output
