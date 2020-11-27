@@ -77,12 +77,13 @@ julia>  From worker 2:  compute-6
 
 Some clusters require the user to specify a list of required resources. 
 For example, it may be necessary to specify how much memory will be needed by the job - see this [issue](https://github.com/JuliaLang/julia/issues/10390).
-The field `queue` can be used to specify these and other options.
+The keyword `queue` can be used to specify these and other options.
+Additionally the keyword `wd` can be used to specify the working directory (which defaults to `ENV["HOME"]`).
 
 ```julia
 julia> using Distributed, ClusterManagers
 
-julia> addprocs_sge(5,queue=`-l h_vmem=4G,tmem=4G`)
+julia> addprocs_sge(5;queue=`-l h_vmem=4G,tmem=4G`, wd=mktempdir())
 Job 5672349 in queue.
 Running.
 5-element Array{Int64,1}:

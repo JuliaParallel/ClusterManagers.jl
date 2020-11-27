@@ -3,16 +3,19 @@ export PBSManager, SGEManager, QRSHManager, addprocs_pbs, addprocs_sge, addprocs
 struct PBSManager <: ClusterManager
     np::Integer
     queue
+    wd
 end
 
 struct SGEManager <: ClusterManager
     np::Integer
     queue
+    wd
 end
 
 struct QRSHManager <: ClusterManager
     np::Integer
     queue
+    wd
 end
 
 function launch(manager::Union{PBSManager, SGEManager, QRSHManager},
@@ -21,7 +24,7 @@ function launch(manager::Union{PBSManager, SGEManager, QRSHManager},
         dir = params[:dir]
         exename = params[:exename]
         exeflags = params[:exeflags]
-        home = ENV["HOME"]
+        wd = manager.wd
         isPBS = isa(manager, PBSManager)
 
         np = manager.np
@@ -31,7 +34,7 @@ function launch(manager::Union{PBSManager, SGEManager, QRSHManager},
 
         if isa(manager, QRSHManager)
           cmd = `cd $dir '&&' $exename $exeflags $(worker_arg())`
-          qrsh_cmd = `qrsh $queue -V -N $jobname -now n "$cmd"`
+          qrsh_cmd = `qrsh $queue -V -N $jobname -wd $wd -now n "$cmd"`
 
           stream_proc = [open(qrsh_cmd) for i in 1:np]
 
@@ -47,8 +50,8 @@ function launch(manager::Union{PBSManager, SGEManager, QRSHManager},
         else  # PBS & SGE
             cmd = `cd $dir '&&' $exename $exeflags $(worker_arg())`
             qsub_cmd = pipeline(`echo $(Base.shell_escape(cmd))` , (isPBS ?
-                    `qsub -N $jobname -j oe -k o -t 1-$np $queue` :
-                    `qsub -N $jobname -terse -j y -R y -t 1-$np -V $queue`))
+                    `qsub -N $jobname -wd $wd -j oe -k o -t 1-$np $queue` :
+                    `qsub -N $jobname -wd $wd -terse -j y -R y -t 1-$np -V $queue`))
 
             out = open(qsub_cmd)
             if !success(out)
@@ -60,7 +63,7 @@ function launch(manager::Union{PBSManager, SGEManager, QRSHManager},
                 id = id[1:end-2]
             end
 
-            filenames(i) = "$home/julia-$(getpid()).o$id-$i","$home/julia-$(getpid())-$i.o$id","$home/julia-$(getpid()).o$id.$i"
+            filenames(i) = "$wd/julia-$(getpid()).o$id-$i","$wd/julia-$(getpid())-$i.o$id","$wd/julia-$(getpid()).o$id.$i"
 
             println("Job $id in queue.")
             for i=1:np
@@ -110,8 +113,8 @@ function kill(manager::Union{PBSManager, SGEManager, QRSHManager}, id::Int64, co
     end
 end
 
-addprocs_pbs(np::Integer; queue="") = addprocs(PBSManager(np, queue))
+addprocs_pbs(np::Integer; queue="", wd=ENV["HOME"]) = addprocs(PBSManager(np, queue, wd))
 
-addprocs_sge(np::Integer; queue="") = addprocs(SGEManager(np, queue))
+addprocs_sge(np::Integer; queue="", wd=ENV["HOME"]) = addprocs(SGEManager(np, queue, wd))
 
-addprocs_qrsh(np::Integer; queue="") = addprocs(QRSHManager(np, queue))
+addprocs_qrsh(np::Integer; queue="", wd=ENV["HOME"]) = addprocs(QRSHManager(np, queue, wd))
