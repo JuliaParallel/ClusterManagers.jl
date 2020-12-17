@@ -13,7 +13,7 @@ function condor_script(portnum::Integer, np::Integer, params::Dict)
     extrajdl = get(params, :extrajdl, [])
     extraenv = get(params, :extraenv, [])
     extrainputs = get(params, :extrainputs, [])
-    telnetloc = get(params, :telnetloc, "/usr/bin/telnet")
+    telnetexe = get(params, :telnetexe, "/usr/bin/telnet")
     home = ENV["HOME"]
     hostname = ENV["HOSTNAME"]
     jobname = "julia-$(getpid())"
@@ -26,7 +26,7 @@ function condor_script(portnum::Integer, np::Integer, params::Dict)
         println(scriptf, line)
     end
     println(scriptf, "cd $(Base.shell_escape(dir))")
-    println(scriptf, "$(Base.shell_escape(exename)) $(Base.shell_escape(worker_arg())) | $telnetloc $(Base.shell_escape(hostname)) $portnum")
+    println(scriptf, "$(Base.shell_escape(exename)) $(Base.shell_escape(worker_arg())) | $telnetexe $(Base.shell_escape(hostname)) $portnum")
     close(scriptf)
 
     input_files = ["$tdir/$jobname.sh"]
