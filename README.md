@@ -15,7 +15,7 @@ Support for different job queue systems commonly used on compute clusters.
 | Slurm | `addprocs_slurm(np::Integer; kwargs...)` or `addprocs(SlurmManager(np); kwargs...)` |
 | Local manager with CPU affinity setting | `addprocs(LocalAffinityManager(;np=CPU_CORES, mode::AffinityMode=BALANCED, affinities=[]); kwargs...)` |
 
-You can also write your own custom cluster manager; see the instructions in the [Julia manual](https://docs.julialang.org/en/v1/manual/parallel-computing/#ClusterManagers)
+You can also write your own custom cluster manager; see the instructions in the [Julia manual](https://docs.julialang.org/en/v1/manual/distributed-computing/#ClusterManagers)
 
 ### Slurm: a simple example
 
@@ -75,21 +75,23 @@ julia>  From worker 2:  compute-6
         From worker 3:  compute-6
 ```
 
-### SGE - an example with resource list
-
-Some clusters require the user to specify a list of required resources. For example, it may be necessary to specify how much memory will be needed by the job - see this [issue](https://github.com/JuliaLang/julia/issues/10390).
+Some clusters require the user to specify a list of required resources. 
+For example, it may be necessary to specify how much memory will be needed by the job - see this [issue](https://github.com/JuliaLang/julia/issues/10390).
+The keyword `queue` can be used to specify these and other options.
+Additionally the keyword `wd` can be used to specify the working directory (which defaults to `ENV["HOME"]`).
 
 ```julia
-julia> using ClusterManagers
+julia> using Distributed, ClusterManagers
 
-julia> addprocs_sge(5,res_list="h_vmem=4G,tmem=4G")
-job id is 9827051, waiting for job to start ........
+julia> addprocs_sge(5;queue=`-l h_vmem=4G,tmem=4G`, wd=mktempdir())
+Job 5672349 in queue.
+Running.
 5-element Array{Int64,1}:
- 22
- 23
- 24
- 25
- 26
+ 2
+ 3
+ 4
+ 5
+ 6
 
 julia> pmap(x->run(`hostname`),workers());
 
@@ -98,6 +100,9 @@ julia>  From worker 26: lum-7-2.local
         From worker 22: chong-207-10.local
         From worker 24: pace-6-11.local
         From worker 25: cheech-207-16.local
+
+julia> rmprocs(workers())
+Task (done)
 ```
 
 ### SGE via qrsh
