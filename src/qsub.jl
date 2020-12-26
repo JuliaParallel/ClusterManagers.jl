@@ -51,7 +51,7 @@ function launch(manager::Union{PBSManager, SGEManager, QRSHManager},
             cmd = `cd $dir '&&' $exename $exeflags $(worker_arg())`
             qsub_cmd = pipeline(`echo $(Base.shell_escape(cmd))` , (isPBS ?
                     `qsub -N $jobname -wd $wd -j oe -k o -t 1-$np $queue` :
-                    `qsub -N $jobname -wd $wd -terse -j y -R y -t 1-$np -V $queue`))
+                    `qsub -N $jobname -wd $wd -terse -j y -R y -t 1-$np -V -q $queue`))
 
             out = open(qsub_cmd)
             if !success(out)
