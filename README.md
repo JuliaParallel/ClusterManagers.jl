@@ -7,9 +7,9 @@ Support for different job queue systems commonly used on compute clusters.
 | Job queue system | Command to add processors |
 | ---------------- | ------------------------- |
 | Load Sharing Facility (LSF) | `addprocs_lsf(np::Integer; bsub_flags=``, ssh_cmd=``)` or `addprocs(LSFManager(np, bsub_flags, ssh_cmd, retry_delays, throttle))` |
-| Sun Grid Engine  | `addprocs_sge(np::Integer, queue="")` or `addprocs(SGEManager(np, queue))` |
-| SGE via qrsh | `addprocs_qrsh(np::Integer, queue="")` or `addprocs(QRSHManager(np, queue))` |
-| PBS              | `addprocs_pbs(np::Integer, queue="")` or `addprocs(PBSManager(np, queue))` |
+| Sun Grid Engine  | `addprocs_sge(np::Integer; qsub_flags=``)` or `addprocs(SGEManager(np, qsub_flags))` |
+| SGE via qrsh | `addprocs_qrsh(np::Integer; qsub_flags=``)` or `addprocs(QRSHManager(np, qsub_flags))` |
+| PBS              | `addprocs_pbs(np::Integer; qsub_flags=``)` or `addprocs(PBSManager(np, qsub_flags))` |
 | Scyld | `addprocs_scyld(np::Integer)` or `addprocs(ScyldManager(np))` |
 | HTCondor | `addprocs_htc(np::Integer)` or `addprocs(HTCManager(np))` |
 | Slurm | `addprocs_slurm(np::Integer; kwargs...)` or `addprocs(SlurmManager(np); kwargs...)` |
@@ -55,7 +55,7 @@ end
 ```julia
 julia> using ClusterManagers
 
-julia> ClusterManagers.addprocs_sge(5)
+julia> ClusterManagers.addprocs_sge(5; qsub_flags=`-q queue_name`)
 job id is 961, waiting for job to start .
 5-element Array{Any,1}:
 2
@@ -83,7 +83,7 @@ Additionally the keyword `wd` can be used to specify the working directory (whic
 ```julia
 julia> using Distributed, ClusterManagers
 
-julia> addprocs_sge(5;queue=`-l h_vmem=4G,tmem=4G`, wd=mktempdir())
+julia> addprocs_sge(5;queue=`-q queue_name -l h_vmem=4G,tmem=4G`, wd=mktempdir())
 Job 5672349 in queue.
 Running.
 5-element Array{Int64,1}:
