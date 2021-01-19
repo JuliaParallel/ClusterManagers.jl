@@ -20,7 +20,7 @@ You can also write your own custom cluster manager; see the instructions in the 
 ### Slurm: a simple example
 
 ```julia
-using ClusterManagers
+using Distributed, ClusterManagers
 
 # Arguments to the Slurm srun(1) command can be given as keyword
 # arguments to addprocs.  The argument name and value is translated to
