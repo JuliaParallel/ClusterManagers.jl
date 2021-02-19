@@ -113,8 +113,8 @@ function kill(manager::Union{PBSManager, SGEManager, QRSHManager}, id::Int64, co
     end
 end
 
-addprocs_pbs(np::Integer; qsub_flags=``, wd=ENV["HOME"]) = addprocs(PBSManager(np, qsub_flags, wd))
+addprocs_pbs(np::Integer; qsub_flags=``, wd=ENV["HOME"], kwargs...) = addprocs(PBSManager(np, qsub_flags, wd); kwargs...)
 
-addprocs_sge(np::Integer; qsub_flags=``, wd=ENV["HOME"]) = addprocs(SGEManager(np, qsub_flags, wd))
+addprocs_sge(np::Integer; qsub_flags=``, wd=ENV["HOME"], kwargs...) = addprocs(SGEManager(np, qsub_flags, wd); kwargs...)
 
-addprocs_qrsh(np::Integer; qsub_flags=``, wd=ENV["HOME"]) = addprocs(QRSHManager(np, qsub_flags, wd))
+addprocs_qrsh(np::Integer; qsub_flags=``, wd=ENV["HOME"], kwargs...) = addprocs(QRSHManager(np, qsub_flags, wd); kwargs...)
