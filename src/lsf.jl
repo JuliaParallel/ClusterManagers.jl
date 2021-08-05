@@ -34,7 +34,7 @@ function lsf_bpeek(manager::LSFManager, jobid, iarray)
         if !isnothing(conn_info_match)
             host = conn_info_match.captures[2]
             port = parse(Int, conn_info_match.captures[1])
-            @info("worker listening at: [$bytestr]", host, port)
+            @debug("lsf worker listening", connect_info=bytestr, host, port)
             # process started, reset to marked position and hand over to Distributed module
             reset(stream)
             worker_started = true
