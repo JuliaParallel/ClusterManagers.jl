@@ -46,6 +46,9 @@ function lsf_bpeek(manager::LSFManager, jobid, iarray)
                 sleep(delay)
                 delay, backoff_state = iterate(backoff, backoff_state)
                 streamer_proc = run(streamer_cmd; wait=false)
+            elseif occursin("<< output from stdout >>", bytestr) || occursin("<< output from stderr >>", bytestr)
+                # ignore this bpeek output decoration and continue to read the next line
+                mark(stream)
             else
                 # unknown response from worker process
                 close(stream)
