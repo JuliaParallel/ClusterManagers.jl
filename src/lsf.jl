@@ -3,7 +3,10 @@ export LSFManager, addprocs_lsf
 struct LSFManager <: ClusterManager
     np::Integer
     bsub_flags::Cmd
+    bpeek_flags::Cmd
     ssh_cmd::Cmd
+    bsub_cmd::Cmd
+    bpeek_cmd::Cmd
     retry_delays
     throttle::Integer
 end
@@ -16,7 +19,7 @@ function bpeek(manager, jobid, iarray)
     old_stderr = stderr
     rd,_ = redirect_stderr()
     try
-        io = open(`$(manager.ssh_cmd) bpeek $(jobid)\[$iarray\]`)
+        io = open(`$(manager.ssh_cmd) $(manager.bpeek_cmd) $(manager.bpeek_flags) $(jobid)\[$iarray\]`)
         success(io) || throw(LSFException(String(readavailable(rd))))
         return io
     finally
@@ -55,7 +58,7 @@ function launch(manager::LSFManager, params::Dict, launched::Array, c::Condition
         jobname = `julia-$(getpid())`
 
         cmd = `$exename $exeflags $(worker_arg())`
-        bsub_cmd = `$(manager.ssh_cmd) bsub $(manager.bsub_flags) -cwd $dir -J $(jobname)\[1-$np\] "$cmd"`
+        bsub_cmd = `$(manager.ssh_cmd) $(manager.bsub_cmd) $(manager.bsub_flags) -cwd $dir -J $(jobname)\[1-$np\] "$cmd"`
 
         line = open(readline, bsub_cmd)
         m = match(r"Job <([0-9]+)> is submitted", line)
@@ -78,7 +81,10 @@ kill(manager::LSFManager, id::Int64, config::WorkerConfig) = remote_do(exit, id)
 """
     addprocs_lsf(np::Integer;
                  bsub_flags::Cmd=``,
+                 bpeek_flags::Cmd=``,
                  ssh_cmd::Cmd=``,
+                 bsub_cmd::Cmd=`bsub`,
+                 bpeek_cmd::Cmd=`bpeek`,
                  retry_delays=ExponentialBackOff(n=10,
                                                  first_delay=1, max_delay=512,
                                                  factor=2),
@@ -101,10 +107,13 @@ addprocs_lsf(1000; ssh_cmd=`ssh login`, throttle=10)
 """
 addprocs_lsf(np::Integer;
              bsub_flags::Cmd=``,
+             bpeek_flags::Cmd=``,
              ssh_cmd::Cmd=``,
+             bsub_cmd::Cmd=`bsub`,
+             bpeek_cmd::Cmd=`bpeek`,
              retry_delays=ExponentialBackOff(n=10,
                                              first_delay=1, max_delay=512,
                                              factor=2),
              throttle::Integer=np,
              params...) =
-        addprocs(LSFManager(np, bsub_flags, ssh_cmd, retry_delays, throttle); params...)
+        addprocs(LSFManager(np, bsub_flags, bpeek_flags, ssh_cmd, bsub_cmd, bpeek_cmd, retry_delays, throttle); params...)
