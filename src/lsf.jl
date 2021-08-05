@@ -25,10 +25,16 @@ function lsf_bpeek(manager::LSFManager, jobid, iarray)
     delay, backoff_state = iterate(backoff)
     streamer_proc = run(streamer_cmd; wait=false)
     worker_started = false
+    host = nothing
+    port = nothing
 
     while !worker_started
         bytestr = readline(stream)
-        if !isnothing(match(port_host_regex, bytestr))
+        conn_info_match = match(port_host_regex, bytestr)
+        if !isnothing(conn_info_match)
+            host = conn_info_match.captures[2]
+            port = parse(Int, conn_info_match.captures[1])
+            @info("worker listening at: [$bytestr]", host, port)
             # process started, reset to marked position and hand over to Distributed module
             reset(stream)
             worker_started = true
@@ -57,12 +63,15 @@ function lsf_bpeek(manager::LSFManager, jobid, iarray)
         end
     end
 
-    return stream
+    return stream, host, port
 end
 
 function lsf_launch_and_monitor(manager::LSFManager, launched, c, jobid, iarray)
     config = WorkerConfig()
-    config.io = lsf_bpeek(manager, jobid, iarray)
+    io, host, port = lsf_bpeek(manager, jobid, iarray)
+    config.io = io
+    config.host = host
+    config.port = port
     config.userdata = `$jobid\[$iarray\]`
 
     push!(launched, config)
