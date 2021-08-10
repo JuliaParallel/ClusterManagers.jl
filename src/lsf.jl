@@ -15,32 +15,63 @@ struct LSFException <: Exception
     msg
 end
 
-function bpeek(manager, jobid, iarray)
-    old_stderr = stderr
-    rd,_ = redirect_stderr()
-    try
-        io = open(`$(manager.ssh_cmd) $(manager.bpeek_cmd) $(manager.bpeek_flags) $(jobid)\[$iarray\]`)
-        success(io) || throw(LSFException(String(readavailable(rd))))
-        return io
-    finally
-        redirect_stderr(old_stderr)
+function lsf_bpeek(manager::LSFManager, jobid, iarray)
+    port_host_regex = r"julia_worker:([0-9]+)#([0-9.]+)"
+    stream = Base.BufferStream()
+    mark(stream)    # so that we can reset to beginning after ensuring process started
+
+    streamer_cmd = pipeline(`$(manager.ssh_cmd) $(manager.bpeek_cmd) $(manager.bpeek_flags) $(jobid)\[$iarray\]`; stdout=stream, stderr=stream)
+    backoff = manager.retry_delays
+    delay, backoff_state = iterate(backoff)
+    streamer_proc = run(streamer_cmd; wait=false)
+    worker_started = false
+    host = nothing
+    port = nothing
+
+    while !worker_started
+        bytestr = readline(stream)
+        conn_info_match = match(port_host_regex, bytestr)
+        if !isnothing(conn_info_match)
+            host = conn_info_match.captures[2]
+            port = parse(Int, conn_info_match.captures[1])
+            @debug("lsf worker listening", connect_info=bytestr, host, port)
+            # process started, reset to marked position and hand over to Distributed module
+            reset(stream)
+            worker_started = true
+        else
+            if occursin("Not yet started", bytestr)
+                # reset to marked position, bpeek process would have stopped
+                wait(streamer_proc)
+                mark(stream)
+
+                # retry with backoff if within retry limit
+                if backoff_state[1] == 0
+                    close(stream)
+                    throw(LSFException(bytestr))
+                end
+                sleep(delay)
+                delay, backoff_state = iterate(backoff, backoff_state)
+                streamer_proc = run(streamer_cmd; wait=false)
+            elseif occursin("<< output from stdout >>", bytestr) || occursin("<< output from stderr >>", bytestr)
+                # ignore this bpeek output decoration and continue to read the next line
+                mark(stream)
+            else
+                # unknown response from worker process
+                close(stream)
+                throw(LSFException(bytestr))
+            end
+        end
     end
+
+    return stream, host, port
 end
 
-function _launch(manager, launched, c, jobid, iarray)
+function lsf_launch_and_monitor(manager::LSFManager, launched, c, jobid, iarray)
     config = WorkerConfig()
-
-    io = retry(()->bpeek(manager, jobid, iarray),
-               delays=manager.retry_delays,
-               check=(s,e)->occursin("Not yet started", e.msg))()
-    port_host_regex = r"julia_worker:([0-9]+)#([0-9.]+)"
-    for line in eachline(io)
-        mm = match(port_host_regex, line)
-        isnothing(mm) && continue
-        config.host = mm.captures[2]
-        config.port = parse(Int, mm.captures[1])
-        break
-    end
+    io, host, port = lsf_bpeek(manager, jobid, iarray)
+    config.io = io
+    config.host = host
+    config.port = port
     config.userdata = `$jobid\[$iarray\]`
 
     push!(launched, config)
@@ -64,7 +95,7 @@ function launch(manager::LSFManager, params::Dict, launched::Array, c::Condition
         m = match(r"Job <([0-9]+)> is submitted", line)
         jobid = m.captures[1]
 
-        asyncmap((i)->_launch(manager, launched, c, jobid, i),
+        asyncmap((i)->lsf_launch_and_monitor(manager, launched, c, jobid, i),
                  1:np;
                  ntasks=manager.throttle)
  
@@ -81,7 +112,7 @@ kill(manager::LSFManager, id::Int64, config::WorkerConfig) = remote_do(exit, id)
 """
     addprocs_lsf(np::Integer;
                  bsub_flags::Cmd=``,
-                 bpeek_flags::Cmd=``,
+                 bpeek_flags::Cmd=`-f`,
                  ssh_cmd::Cmd=``,
                  bsub_cmd::Cmd=`bsub`,
                  bpeek_cmd::Cmd=`bpeek`,
@@ -97,7 +128,8 @@ to your cluster or workflow needs.  `ssh_cmd` can be used to launch workers
 from other than the cluster head node (e.g. your personal workstation).
 `retry_delays` is a vector of numbers specifying in seconds how long to
 repeatedly wait for a worker to start.  `throttle` specifies how many workers
-to launch at once.
+to launch at once. Having `-f` in bpeek flags (which is the default) will let
+stdout of workers to be displayed on master too.
 
 # Examples
 
@@ -107,7 +139,7 @@ addprocs_lsf(1000; ssh_cmd=`ssh login`, throttle=10)
 """
 addprocs_lsf(np::Integer;
              bsub_flags::Cmd=``,
-             bpeek_flags::Cmd=``,
+             bpeek_flags::Cmd=`-f`,
              ssh_cmd::Cmd=``,
              bsub_cmd::Cmd=`bsub`,
              bpeek_cmd::Cmd=`bpeek`,
