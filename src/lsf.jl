@@ -21,14 +21,13 @@ function lsf_bpeek(manager::LSFManager, jobid, iarray)
     mark(stream)    # so that we can reset to beginning after ensuring process started
 
     streamer_cmd = pipeline(`$(manager.ssh_cmd) $(manager.bpeek_cmd) $(manager.bpeek_flags) $(jobid)\[$iarray\]`; stdout=stream, stderr=stream)
-    backoff = manager.retry_delays
-    delay, backoff_state = iterate(backoff)
+    retry_delays = manager.retry_delays
     streamer_proc = run(streamer_cmd; wait=false)
     worker_started = false
     host = nothing
     port = nothing
 
-    while !worker_started
+    for retry_delay in retry_delays
         bytestr = readline(stream)
         conn_info_match = match(port_host_regex, bytestr)
         if !isnothing(conn_info_match)
@@ -38,6 +37,7 @@ function lsf_bpeek(manager::LSFManager, jobid, iarray)
             # process started, reset to marked position and hand over to Distributed module
             reset(stream)
             worker_started = true
+            break
         else
             if occursin("Not yet started", bytestr)
                 # reset to marked position, bpeek process would have stopped
@@ -45,12 +45,7 @@ function lsf_bpeek(manager::LSFManager, jobid, iarray)
                 mark(stream)
 
                 # retry with backoff if within retry limit
-                if backoff_state[1] == 0
-                    close(stream)
-                    throw(LSFException(bytestr))
-                end
-                sleep(delay)
-                delay, backoff_state = iterate(backoff, backoff_state)
+                sleep(retry_delay)
                 streamer_proc = run(streamer_cmd; wait=false)
             elseif occursin("<< output from stdout >>", bytestr) || occursin("<< output from stderr >>", bytestr)
                 # ignore this bpeek output decoration and continue to read the next line
@@ -61,6 +56,11 @@ function lsf_bpeek(manager::LSFManager, jobid, iarray)
                 throw(LSFException(bytestr))
             end
         end
+    end
+
+    if !worker_started
+        close(stream)
+        throw(LSFException(bytestr))
     end
 
     return stream, host, port
