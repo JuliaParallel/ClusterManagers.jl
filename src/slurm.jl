@@ -76,6 +76,8 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
                         break   # break if specification found
                     end
                 end
+                # Sleep for some time to limit ressource usage while waiting for the job to start
+                sleep(0.1)
             end
             config = WorkerConfig()
             config.port = parse(Int, slurm_spec_match[2])
