@@ -6,6 +6,11 @@ import Logging.@warn
 
 struct SlurmManager <: ClusterManager
     np::Integer
+    retry_delays
+end
+
+struct SlurmException <: Exception
+    msg
 end
 
 function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
@@ -54,12 +59,13 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
         srun_cmd = `srun -J $jobname -n $np -o "$(job_output_template)" -D $exehome $(srunargs) $exename $exeflags $(worker_arg())`
         srun_proc = open(srun_cmd)
         slurm_spec_regex = r"([\w]+):([\d]+)#(\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})"
+        retry_delays = manager.retry_delays
         for i = 0:np - 1
             println("connecting to worker $(i + 1) out of $np")
             slurm_spec_match = nothing
             fn = make_job_output_path(lpad(i, 4, "0"))
             t0 = time()
-            while true
+            for retry_delay in retry_delays
                 # Wait for output log to be created and populated, then parse
                 if isfile(fn) && filesize(fn) > 0
                     slurm_spec_match = open(fn) do f
@@ -77,8 +83,13 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
                     end
                 end
                 # Sleep for some time to limit ressource usage while waiting for the job to start
-                sleep(0.1)
+                sleep(retry_delay)
             end
+
+            if slurm_spec_match === nothing
+                throw(SlurmException("Timeout while trying to connect to worker"))
+            end
+
             config = WorkerConfig()
             config.port = parse(Int, slurm_spec_match[2])
             config.host = strip(slurm_spec_match[3])
@@ -99,4 +110,18 @@ function manage(manager::SlurmManager, id::Integer, config::WorkerConfig,
     # This function needs to exist, but so far we don't do anything
 end
 
-addprocs_slurm(np::Integer; kwargs...) = addprocs(SlurmManager(np); kwargs...)
+"""
+Launch `np` workers on a cluster managed by slurm. `retry_delays` is a vector of
+numbers specifying in seconds how long to repeatedly wait for a worker to start.
+Defaults to an exponential backoff.
+
+# Examples
+
+```
+addprocs_slurm(100; retry_delays=Iterators.repeated(0.1))
+```
+"""
+addprocs_slurm(np::Integer;
+               retry_delays=ExponentialBackOff(n=10, first_delay=1,
+                                               max_delay=512, factor=2),
+               kwargs...) = addprocs(SlurmManager(np, retry_delays); kwargs...)
