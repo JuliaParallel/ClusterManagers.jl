@@ -7,20 +7,21 @@ Support for different job queue systems commonly used on compute clusters.
 | Job queue system | Command to add processors |
 | ---------------- | ------------------------- |
 | Load Sharing Facility (LSF) | `addprocs_lsf(np::Integer; bsub_flags=``, ssh_cmd=``)` or `addprocs(LSFManager(np, bsub_flags, ssh_cmd, retry_delays, throttle))` |
-| Sun Grid Engine  | `addprocs_sge(np::Integer, queue="")` or `addprocs(SGEManager(np, queue))` |
-| SGE via qrsh | `addprocs_qrsh(np::Integer, queue="")` or `addprocs(QRSHManager(np, queue))` |
-| PBS              | `addprocs_pbs(np::Integer, queue="")` or `addprocs(PBSManager(np, queue))` |
+| Sun Grid Engine  | `addprocs_sge(np::Integer; qsub_flags=``)` or `addprocs(SGEManager(np, qsub_flags))` |
+| SGE via qrsh | `addprocs_qrsh(np::Integer; qsub_flags=``)` or `addprocs(QRSHManager(np, qsub_flags))` |
+| PBS              | `addprocs_pbs(np::Integer; qsub_flags=``)` or `addprocs(PBSManager(np, qsub_flags))` |
 | Scyld | `addprocs_scyld(np::Integer)` or `addprocs(ScyldManager(np))` |
 | HTCondor | `addprocs_htc(np::Integer)` or `addprocs(HTCManager(np))` |
 | Slurm | `addprocs_slurm(np::Integer; kwargs...)` or `addprocs(SlurmManager(np); kwargs...)` |
 | Local manager with CPU affinity setting | `addprocs(LocalAffinityManager(;np=CPU_CORES, mode::AffinityMode=BALANCED, affinities=[]); kwargs...)` |
+| Kubernetes (K8s) via [K8sClusterManagers.jl](https://github.com/beacon-biosignals/K8sClusterManagers.jl) | `addprocs(K8sClusterManagers(np; kwargs...))` |
 
-You can also write your own custom cluster manager; see the instructions in the [Julia manual](https://docs.julialang.org/en/latest/manual/parallel-computing/#ClusterManagers-1)
+You can also write your own custom cluster manager; see the instructions in the [Julia manual](https://docs.julialang.org/en/v1/manual/distributed-computing/#ClusterManagers)
 
 ### Slurm: a simple example
 
 ```julia
-using ClusterManagers
+using Distributed, ClusterManagers
 
 # Arguments to the Slurm srun(1) command can be given as keyword
 # arguments to addprocs.  The argument name and value is translated to
@@ -55,7 +56,7 @@ end
 ```julia
 julia> using ClusterManagers
 
-julia> ClusterManagers.addprocs_sge(5)
+julia> ClusterManagers.addprocs_sge(5; qsub_flags=`-q queue_name`)
 job id is 961, waiting for job to start .
 5-element Array{Any,1}:
 2
@@ -75,21 +76,23 @@ julia>  From worker 2:  compute-6
         From worker 3:  compute-6
 ```
 
-### SGE - an example with resource list
-
-Some clusters require the user to specify a list of required resources. For example, it may be necessary to specify how much memory will be needed by the job - see this [issue](https://github.com/JuliaLang/julia/issues/10390).
+Some clusters require the user to specify a list of required resources. 
+For example, it may be necessary to specify how much memory will be needed by the job - see this [issue](https://github.com/JuliaLang/julia/issues/10390).
+The keyword `qsub_flags` can be used to specify these and other options.
+Additionally the keyword `wd` can be used to specify the working directory (which defaults to `ENV["HOME"]`).
 
 ```julia
-julia> using ClusterManagers
+julia> using Distributed, ClusterManagers
 
-julia> addprocs_sge(5,res_list="h_vmem=4G,tmem=4G")
-job id is 9827051, waiting for job to start ........
+julia> addprocs_sge(5; qsub_flags=`-q queue_name -l h_vmem=4G,tmem=4G`, wd=mktempdir())
+Job 5672349 in queue.
+Running.
 5-element Array{Int64,1}:
- 22
- 23
- 24
- 25
- 26
+ 2
+ 3
+ 4
+ 5
+ 6
 
 julia> pmap(x->run(`hostname`),workers());
 
@@ -98,6 +101,9 @@ julia>  From worker 26: lum-7-2.local
         From worker 22: chong-207-10.local
         From worker 24: pace-6-11.local
         From worker 25: cheech-207-16.local
+
+julia> rmprocs(workers())
+Task (done)
 ```
 
 ### SGE via qrsh
