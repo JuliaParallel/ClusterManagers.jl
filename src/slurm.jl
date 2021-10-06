@@ -110,6 +110,9 @@ function manage(manager::SlurmManager, id::Integer, config::WorkerConfig,
     # This function needs to exist, but so far we don't do anything
 end
 
+SlurmManager(np::Integer) = SlurmManager(np, ExponentialBackOff(n=10, first_delay=1,
+                                                                max_delay=512, factor=2))
+
 """
 Launch `np` workers on a cluster managed by slurm. `retry_delays` is a vector of
 numbers specifying in seconds how long to repeatedly wait for a worker to start.
