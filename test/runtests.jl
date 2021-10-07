@@ -18,6 +18,19 @@ using Distributed
     wait(rmprocs(workers()))
 end
 
+if "slurm" in ARGS
+    @testset "Slurm" begin
+        p = addprocs_slurm(1)
+        @test nprocs() == 2
+        @test workers() == p
+        @test fetch(@spawnat :any myid()) == p[1]
+        @test remotecall_fetch(+,p[1],1,1) == 2
+        rmprocs(p)
+        @test nprocs() == 1
+        @test workers() == [1]
+    end
+end
+
 @static if Sys.iswindows()
     windows_which(command) = `powershell.exe -Command Get-Command $command`
     is_lsf_installed() = success(windows_which("bsub.exe"))
