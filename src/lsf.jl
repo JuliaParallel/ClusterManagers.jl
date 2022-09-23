@@ -32,23 +32,26 @@ function lsf_bpeek(manager::LSFManager, jobid, iarray)
     stream = Base.BufferStream()
     mark(stream)    # so that we can reset to beginning after ensuring process started
 
-    streamer_cmd = pipeline(`$(manager.ssh_cmd) $(manager.bpeek_cmd) $(manager.bpeek_flags) $(jobid)\[$iarray\]`; stdout=stream, stderr=stream)
+    streamer_cmd = `$(manager.ssh_cmd) $(manager.bpeek_cmd) $(manager.bpeek_flags) $(jobid)\[$iarray\]`
     retry_delays = manager.retry_delays
-    streamer_proc = run(streamer_cmd; wait=false)
+    streamer_proc = run(pipeline(streamer_cmd; stdout=stream, stderr=stream); wait=false)
 
     # Try once before retry loop in case user supplied an empty retry_delays iterator
     worker_started, bytestr, host, port = parse_host_port(stream)
     worker_started && return stream, host, port
 
-    for retry_delay in retry_delays        
+    for retry_delay in retry_delays   
         if occursin("Not yet started", bytestr)
-            # reset to marked position, bpeek process would have stopped
+            # bpeek process would have stopped
+            # stream starts spewing out empty strings after this (in julia != 1.6) 
+            # instead of trying to handle that we just close it and open a new stream
             wait(streamer_proc)
-            mark(stream)
+            close(stream)
+            stream = Base.BufferStream()
 
             # Try bpeeking again after the retry delay
             sleep(retry_delay)
-            streamer_proc = run(streamer_cmd; wait=false)
+            streamer_proc = run(pipeline(streamer_cmd; stdout=stream, stderr=stream); wait=false)                   
         elseif occursin("<< output from stdout >>", bytestr) || occursin("<< output from stderr >>", bytestr)
             # ignore this bpeek output decoration and continue to read the next line
             mark(stream)
