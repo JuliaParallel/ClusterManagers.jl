@@ -40,8 +40,11 @@ function lsf_bpeek(manager::LSFManager, jobid, iarray)
     worker_started, bytestr, host, port = parse_host_port(stream)
     worker_started && return stream, host, port
 
-    for retry_delay in retry_delays   
-        if occursin("Not yet started", bytestr)
+    for retry_delay in retry_delays 
+        # isempty is for the case when -f flag is not used to handle the case when 
+        # the << output from ... >> message is printed but the julia worker has not
+        # yet printed the ip and port nr
+        if isempty(bytestr) || occursin("Not yet started", bytestr)
             # bpeek process would have stopped
             # stream starts spewing out empty strings after this (in julia != 1.6) 
             # instead of trying to handle that we just close it and open a new stream
