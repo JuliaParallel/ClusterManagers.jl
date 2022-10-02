@@ -26,9 +26,7 @@ function condor_script(portnum::Integer, np::Integer, params::Dict)
         println(scriptf, line)
     end
     println(scriptf, "cd $(Base.shell_escape(dir))")
-    println(scriptf, "$(Base.shell_escape(exename)) $(Base.shell_escape(exeflags)) \
-            -e 'using Distributed; start_worker($(repr(worker_cookie())))' \
-            | $telnetexe $(Base.shell_escape(hostname)) $portnum")
+    println(scriptf, "$(Base.shell_escape(exename)) $(Base.shell_escape(exeflags)) -e 'using Distributed; start_worker($(repr(worker_cookie())))' | $telnetexe $(Base.shell_escape(hostname)) $portnum")
     close(scriptf)
 
     input_files = ["$tdir/$jobname.sh"]
