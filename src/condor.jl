@@ -83,10 +83,15 @@ function launch(manager::HTCManager, params::Dict, instances_arr::Array, c::Cond
    end
 end
 
+function kill(manager::HTCManager, id::Int64, config::WorkerConfig)
+    remotecall(exit,id)
+    close(config.io)
+end
+
 function manage(manager::HTCManager, id::Integer, config::WorkerConfig, op::Symbol)
     if op == :finalize
         if !isnothing(config.io)
-            close(get(config.io))
+            close(config.io)
         end
 #     elseif op == :interrupt
 #         job = config[:job]
