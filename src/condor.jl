@@ -26,11 +26,11 @@ function condor_script(portnum::Integer, np::Integer, params::Dict)
         println(scriptf, line)
     end
     println(scriptf, "cd $(Base.shell_escape(dir))")
-    println(scriptf, "$(Base.shell_escape(exename)) $exeflags $(Base.shell_escape(worker_arg())) | $telnetexe $(Base.shell_escape(hostname)) $portnum")
+    println(scriptf, "$(Base.shell_escape(exename)) $(Base.shell_escape(exeflags)) -e 'using Distributed; start_worker($(repr(worker_cookie())))' | $telnetexe $(Base.shell_escape(hostname)) $portnum")
     close(scriptf)
 
     input_files = ["$tdir/$jobname.sh"]
-    push!(input_files, extrainputs...)
+    append!(input_files, extrainputs)
     subf = open("$tdir/$jobname.sub", "w")
     println(subf, "executable = /bin/bash")
     println(subf, "arguments = ./$jobname.sh")
@@ -54,7 +54,7 @@ end
 function launch(manager::HTCManager, params::Dict, instances_arr::Array, c::Condition)
     try
         portnum = rand(8000:9000)
-        _, server = listenany(Sockets.getaddrinfo("0.0.0.0"), portnum)
+        portnum, server = listenany(ip"0.0.0.0", portnum)
         np = manager.np
 
         script = condor_script(portnum, np, params)
@@ -83,10 +83,15 @@ function launch(manager::HTCManager, params::Dict, instances_arr::Array, c::Cond
    end
 end
 
+function kill(manager::HTCManager, id::Int64, config::WorkerConfig)
+    remotecall(exit,id)
+    close(config.io)
+end
+
 function manage(manager::HTCManager, id::Integer, config::WorkerConfig, op::Symbol)
     if op == :finalize
-        if !isnull(config.io)
-            close(get(config.io))
+        if !isnothing(config.io)
+            close(config.io)
         end
 #     elseif op == :interrupt
 #         job = config[:job]
