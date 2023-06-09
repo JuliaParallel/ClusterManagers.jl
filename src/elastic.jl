@@ -18,8 +18,13 @@ struct ElasticManager <: ClusterManager
         Distributed.init_multi()
         cookie !== nothing && cluster_cookie(cookie)
 
+        # Automatically check for the IP address of the local machine
         if addr == :auto
-            addr = get_private_ip()
+            try
+                addr = Sockets.getipaddr(IPv4)
+            catch
+                error("Failed to automatically get host's IP address. Please specify `addr=` explicitly.")
+            end
         end
         
         l_sock = listen(addr, port)
@@ -132,25 +137,6 @@ function elastic_worker(cookie, addr="127.0.0.1", port=9009; stdout_to_master=tr
     write(c, rpad(cookie, HDR_COOKIE_LEN)[1:HDR_COOKIE_LEN])
     stdout_to_master && redirect_stdout(c)
     start_worker(c, cookie)
-end
-
-
-function get_private_ip()
-    if Sys.islinux()
-        cmd = `hostname --ip-address`
-    elseif Sys.isapple()
-        cmd = `ipconfig getifaddr en0`
-    else
-        error("`addr=:auto` is only supported on Linux and Mac")
-    end
-    try
-        return IPv4(first(split(strip(read(cmd, String)))))
-    catch err
-        error("""Failed to automatically get host's IP address (output below). Please specify `addr=` explicitly.
-        \$ $(repr(cmd))
-        $err
-        """)
-    end
 end
 
 function get_connect_cmd(em::ElasticManager; absolute_exename=true, same_project=true)
