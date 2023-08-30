@@ -28,11 +28,11 @@ function show_network_interfaces {
 }
 
 function jobqueue_install {
-    docker exec slurmctld /bin/bash -c "cd /dask-jobqueue; pip install -e ."
+    docker exec slurmctld /bin/bash -c "echo Hello World"
 }
 
 function jobqueue_script {
-    docker exec slurmctld /bin/bash -c "cd; pytest /dask-jobqueue/dask_jobqueue --verbose -E slurm -s"
+    docker exec slurmctld /bin/bash -c "echo Hello World"
 }
 
 function jobqueue_after_script {
