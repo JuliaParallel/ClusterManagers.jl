@@ -4,10 +4,4 @@ channels:
   - defaults
 dependencies:
   - python=3.8
-  - dask
-  - distributed
-  - flake8
-  - black
-  - pytest
-  - pytest-asyncio
-  - cryptography
+  - juliaup
