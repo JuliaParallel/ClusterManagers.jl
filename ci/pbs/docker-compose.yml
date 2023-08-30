@@ -1,0 +1,54 @@
+version: "2"
+
+services:
+
+  master:
+    image: daskdev/dask-jobqueue:pbs
+    build: .
+    container_name: pbs_master
+    hostname: pbs_master
+    environment:
+      - CI_SHARED_SPACE=/shared_space
+    volumes:
+      - ../..:/dask-jobqueue
+      - userhome:/home/pbsuser
+      - shared_space:/shared_space
+    command: bash /run-master.sh
+
+  slave_one:
+    image: daskdev/dask-jobqueue:pbs
+    build: .
+    container_name: pbs_slave_1
+    hostname: pbs_slave_1
+    volumes:
+      - userhome:/home/pbsuser
+      - shared_space:/shared_space
+    entrypoint: "bash /slave-entrypoint.sh"
+    command: bash /run-slave.sh
+    links:
+      - "master:pbs_master"
+    environment:
+      - PBS_MASTER=pbs_master
+    depends_on:
+      - master
+
+  slave_two:
+    image: daskdev/dask-jobqueue:pbs
+    build: .
+    container_name: pbs_slave_2
+    hostname: pbs_slave_2
+    volumes:
+      - userhome:/home/pbsuser
+      - shared_space:/shared_space
+    entrypoint: "bash /slave-entrypoint.sh"
+    command: bash /run-slave.sh
+    links:
+      - "master:pbs_master"
+    environment:
+      - PBS_MASTER=pbs_master
+    depends_on:
+      - master
+
+volumes:
+  userhome:
+  shared_space:
