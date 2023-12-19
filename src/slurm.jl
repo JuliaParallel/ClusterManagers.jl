@@ -55,10 +55,7 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
 	jobname = "julia-$(getpid())"
 	has_output_name = ("-o" in srunargs) | ("--output" in srunargs)
 	if has_output_name
-	    loc = findfirst(x-> x == "-o", srunargs)
-	    if isnothing(loc) 
-		loc = findfirst(x-> x == "--output", srunargs)
-	    end
+	    loc = findfirst(x-> x == "-o" || x == "--output", srunargs)
 	    job_output_name = srunargs[loc+1]
 	    job_output_template = joinpath(job_file_loc, job_output_name)
 	    srunargs[loc+1] = job_output_template
