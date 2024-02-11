@@ -1,8 +1,17 @@
 # ClusterManagers
 
-Support for different job queue systems commonly used on compute clusters.
+> [!WARNING]
+> This package is looking for a maintainer. Most users doing serious distributed calculations
+> should use [MPI.jl](https://github.com/JuliaParallel/MPI.jl) instead.
 
-## Currently supported job queue systems
+Experiment to support different job queue systems commonly used on compute clusters with Distributed.jl.
+
+## Currently job queue systems
+
+The below table summarizes the job queue systems with implementations.
+However, several of them are known to not work with recent cluster management versions,
+so use them with caution.
+
 
 | Job queue system | Command to add processors |
 | ---------------- | ------------------------- |
