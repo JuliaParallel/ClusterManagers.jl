@@ -6,7 +6,7 @@
 
 Experiment to support different job queue systems commonly used on compute clusters with Distributed.jl.
 
-## Currently job queue systems
+## Available job queue systems
 
 The below table summarizes the job queue systems with implementations.
 However, several of them are known to not work with recent cluster management versions,
