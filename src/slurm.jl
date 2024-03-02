@@ -51,19 +51,34 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
             mkdir(job_file_loc)
         end
 
+	# Check for given output file name
+	jobname = "julia-$(getpid())"
+	has_output_name = ("-o" in srunargs) | ("--output" in srunargs)
+	if has_output_name
+	    loc = findfirst(x-> x == "-o" || x == "--output", srunargs)
+	    job_output_name = srunargs[loc+1]
+	    job_output_template = joinpath(job_file_loc, job_output_name)
+	    srunargs[loc+1] = job_output_template
+	else
+	    job_output_name = "$(jobname)-$(trunc(Int, Base.time() * 10))"
+	    make_job_output_path(task_num) = joinpath(job_file_loc, "$(job_output_name)-$(task_num).out")
+	    job_output_template = make_job_output_path("%4t")
+	    append!(srunargs, "-o", job_output_template)
+	end
+
         np = manager.np
-        jobname = "julia-$(getpid())"
-        job_output_name = "$(jobname)-$(trunc(Int, Base.time() * 10))"
-        make_job_output_path(task_num) = joinpath(job_file_loc, "$(job_output_name)-$(task_num).out")
-        job_output_template = make_job_output_path("%4t")
-        srun_cmd = `srun -J $jobname -n $np -o "$(job_output_template)" -D $exehome $(srunargs) $exename $exeflags $(worker_arg())`
+        srun_cmd = `srun -J $jobname -n $np -D $exehome $(srunargs) $exename $exeflags $(worker_arg())`
         srun_proc = open(srun_cmd)
         slurm_spec_regex = r"([\w]+):([\d]+)#(\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})"
         retry_delays = manager.retry_delays
         for i = 0:np - 1
             println("connecting to worker $(i + 1) out of $np")
             slurm_spec_match = nothing
-            fn = make_job_output_path(lpad(i, 4, "0"))
+	    if has_output_name
+		fn = job_output_template
+	    else
+		fn = make_job_output_path(lpad(i, 4, "0"))
+	    end
             t0 = time()
             for retry_delay in retry_delays
                 # Wait for output log to be created and populated, then parse

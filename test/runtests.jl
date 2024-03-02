@@ -20,7 +20,8 @@ end
 
 if "slurm" in ARGS
     @testset "Slurm" begin
-        p = addprocs_slurm(1)
+	out_file = "my_slurm_job.out"
+        p = addprocs_slurm(1; o=out_file)
         @test nprocs() == 2
         @test workers() == p
         @test fetch(@spawnat :any myid()) == p[1]
@@ -28,6 +29,10 @@ if "slurm" in ARGS
         rmprocs(p)
         @test nprocs() == 1
         @test workers() == [1]
+
+	# Check output file creation
+	@test isfile(out_file)
+	rm(out_file)
     end
 end
 
