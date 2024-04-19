@@ -72,7 +72,7 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
         slurm_spec_regex = r"([\w]+):([\d]+)#(\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})"
         retry_delays = manager.retry_delays
         for i = 0:np - 1
-            println("connecting to worker $(i + 1) out of $np")
+            @info "connecting to worker $(i + 1) out of $np"
             slurm_spec_match = nothing
             if has_output_name
                 fn = job_output_template
@@ -115,7 +115,7 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
             notify(c)
         end
     catch e
-        println("Error launching Slurm job:")
+        @error "Error launching Slurm job"
         rethrow(e)
     end
 end
