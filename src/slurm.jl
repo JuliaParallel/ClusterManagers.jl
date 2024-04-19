@@ -63,7 +63,7 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
 	    job_output_name = "$(jobname)-$(trunc(Int, Base.time() * 10))"
 	    make_job_output_path(task_num) = joinpath(job_file_loc, "$(job_output_name)-$(task_num).out")
 	    job_output_template = make_job_output_path("%4t")
-	    append!(srunargs, "-o", job_output_template)
+	    push!(srunargs, "-o", job_output_template)
 	end
 
         np = manager.np
