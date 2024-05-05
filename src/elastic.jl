@@ -12,9 +12,13 @@ struct ElasticManager <: ClusterManager
     terminated::Set{Int}             # terminated worker ids
     topology::Symbol
     sockname
+    manage_callback
     printing_kwargs
 
-    function ElasticManager(;addr=IPv4("127.0.0.1"), port=9009, cookie=nothing, topology=:all_to_all, printing_kwargs=())
+    function ElasticManager(;
+        addr=IPv4("127.0.0.1"), port=9009, cookie=nothing,
+        topology=:all_to_all, manage_callback=elastic_no_op_callback(), printing_kwargs=()
+    )
         Distributed.init_multi()
         cookie !== nothing && cluster_cookie(cookie)
 
@@ -29,7 +33,7 @@ struct ElasticManager <: ClusterManager
         
         l_sock = listen(addr, port)
 
-        lman = new(Dict{Int, WorkerConfig}(), Channel{TCPSocket}(typemax(Int)), Set{Int}(), topology, getsockname(l_sock), printing_kwargs)
+        lman = new(Dict{Int, WorkerConfig}(), Channel{TCPSocket}(typemax(Int)), Set{Int}(), topology, getsockname(l_sock), manage_callback, printing_kwargs)
 
         @async begin
             while true
@@ -49,8 +53,10 @@ ElasticManager(port) = ElasticManager(;port=port)
 ElasticManager(addr, port) = ElasticManager(;addr=addr, port=port)
 ElasticManager(addr, port, cookie) = ElasticManager(;addr=addr, port=port, cookie=cookie)
 
+elastic_no_op_callback(::ElasticManager, ::Integer, ::Symbol) = nothing
 
 function process_worker_conn(mgr::ElasticManager, s::TCPSocket)
+    @debug "ElasticManager got new worker connection"
     # Socket is the worker's STDOUT
     wc = WorkerConfig()
     wc.io = s
@@ -86,6 +92,7 @@ end
 function launch(mgr::ElasticManager, params::Dict, launched::Array, c::Condition)
     # The workers have already been started.
     while isready(mgr.pending)
+        @debug "ElasticManager.launch new worker"
         wc=WorkerConfig()
         wc.io = take!(mgr.pending)
         push!(launched, wc)
@@ -96,8 +103,12 @@ end
 
 function manage(mgr::ElasticManager, id::Integer, config::WorkerConfig, op::Symbol)
     if op == :register
+        @debug "ElasticManager registering process id $id"
         mgr.active[id] = config
+        mgr.manage_callback(mgr, id, op)
     elseif  op == :deregister
+        @debug "ElasticManager deregistering process id $id"
+        mgr.manage_callback(mgr, id, op)
         delete!(mgr.active, id)
         push!(mgr.terminated, id)
     end
@@ -129,10 +140,19 @@ function Base.show(io::IO, mgr::ElasticManager)
     print(io, String(take!(iob)))
 end
 
+# Same as Distributed.worker_timeout, but that doesn't seem to be public API:
+elastic_worker_default_timeout() = parse(Float64, get(ENV, "JULIA_WORKER_TIMEOUT", "60.0"))
+
 # Does not return. If executing from a REPL try
-# @async connect_to_cluster(.....)
+# @async elastic_worker(.....)
 # addr, port that a ElasticManager on the master processes is listening on.
-function elastic_worker(cookie, addr="127.0.0.1", port=9009; stdout_to_master=true)
+function elastic_worker(
+    cookie::AbstractString, addr::AbstractString="127.0.0.1", port::Integer = 9009;
+    stdout_to_master::Bool = true,
+    Base.@nospecialize(worker_timeout::Real = elastic_worker_default_timeout())
+)
+    @debug "ElasticManager.elastic_worker(cookie, $addr, $port; stdout_to_master=$stdout_to_master, worker_timeout=$worker_timeout)"
+    ENV["JULIA_WORKER_TIMEOUT"] = "$worker_timeout"
     c = connect(addr, port)
     write(c, rpad(cookie, HDR_COOKIE_LEN)[1:HDR_COOKIE_LEN])
     stdout_to_master && redirect_stdout(c)
