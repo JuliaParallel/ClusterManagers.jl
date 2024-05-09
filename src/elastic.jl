@@ -166,6 +166,7 @@ function get_connect_cmd(
 )
     env_withdefaults = Dict{String,String}()
     haskey(ENV, "JULIA_WORKER_TIMEOUT") && (env_withdefaults["JULIA_WORKER_TIMEOUT"] = ENV["JULIA_WORKER_TIMEOUT"])
+    env_withdefaults["JULIA_REVISE"] = "off"
     merge!(env_withdefaults, env)
     env_vec = isempty(env_withdefaults) ? [] : collect(env_withdefaults)
 
