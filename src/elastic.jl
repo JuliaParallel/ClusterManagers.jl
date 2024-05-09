@@ -17,7 +17,7 @@ struct ElasticManager <: ClusterManager
 
     function ElasticManager(;
         addr=IPv4("127.0.0.1"), port=9009, cookie=nothing,
-        topology=:all_to_all, manage_callback=elastic_no_op_callback(), printing_kwargs=()
+        topology=:all_to_all, manage_callback=elastic_no_op_callback, printing_kwargs=()
     )
         Distributed.init_multi()
         cookie !== nothing && cluster_cookie(cookie)
@@ -140,37 +140,46 @@ function Base.show(io::IO, mgr::ElasticManager)
     print(io, String(take!(iob)))
 end
 
-# Same as Distributed.worker_timeout, but that doesn't seem to be public API:
-elastic_worker_default_timeout() = parse(Float64, get(ENV, "JULIA_WORKER_TIMEOUT", "60.0"))
-
 # Does not return. If executing from a REPL try
 # @async elastic_worker(.....)
 # addr, port that a ElasticManager on the master processes is listening on.
 function elastic_worker(
     cookie::AbstractString, addr::AbstractString="127.0.0.1", port::Integer = 9009;
     stdout_to_master::Bool = true,
-    Base.@nospecialize(worker_timeout::Real = elastic_worker_default_timeout())
+    Base.@nospecialize(env::AbstractVector = [],)
 )
-    @debug "ElasticManager.elastic_worker(cookie, $addr, $port; stdout_to_master=$stdout_to_master, worker_timeout=$worker_timeout)"
-    ENV["JULIA_WORKER_TIMEOUT"] = "$worker_timeout"
+    @debug "ElasticManager.elastic_worker(cookie, $addr, $port; stdout_to_master=$stdout_to_master, env=$env)"
+    for (k, v) in env
+        ENV[k] = v
+    end
+
     c = connect(addr, port)
     write(c, rpad(cookie, HDR_COOKIE_LEN)[1:HDR_COOKIE_LEN])
     stdout_to_master && redirect_stdout(c)
     start_worker(c, cookie)
 end
 
-function get_connect_cmd(em::ElasticManager; absolute_exename=true, same_project=true)
-    
+function get_connect_cmd(
+    em::ElasticManager;
+    absolute_exename=true, same_project=true,
+    @nospecialize(env::AbstractDict{<:AbstractString,<:AbstractString} = Dict{String,String}())
+)
+    env_withdefaults = Dict{String,String}()
+    haskey(ENV, "JULIA_WORKER_TIMEOUT") && (env_withdefaults["JULIA_WORKER_TIMEOUT"] = ENV["JULIA_WORKER_TIMEOUT"])
+    merge!(env_withdefaults, env)
+    env_vec = isempty(env_withdefaults) ? [] : collect(env_withdefaults)
+
     ip = string(em.sockname[1])
     port = convert(Int,em.sockname[2])
     cookie = cluster_cookie()
     exename = absolute_exename ? joinpath(Sys.BINDIR, Base.julia_exename()) : "julia"
     project = same_project ? ("--project=$(Pkg.API.Context().env.project_file)",) : ()
+
     
     join([
         exename,
         project...,
-        "-e 'using ClusterManagers; ClusterManagers.elastic_worker(\"$cookie\",\"$ip\",$port)'"
+        "-e 'using ClusterManagers; ClusterManagers.elastic_worker(\"$cookie\",\"$ip\",$port;env=$(string(env_vec)))'"
     ]," ")
     
 end
