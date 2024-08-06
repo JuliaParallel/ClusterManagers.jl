@@ -1,0 +1,61 @@
+version: "3.4"
+
+services:
+
+  master:
+    image: daskdev/dask-jobqueue:sge
+    build:
+      context: .
+      target: master
+    container_name: sge_master
+    hostname: sge_master
+    #network_mode: host
+    environment:
+      - CI_SHARED_SPACE=/shared_space
+    volumes:
+      - ../..:/dask-jobqueue
+      - userhome:/root
+      - shared_space:/shared_space
+    command: bash /dask-jobqueue/ci/sge/run-master.sh
+
+  slave-one:
+    image: daskdev/dask-jobqueue:sge-slave
+    build:
+      context: .
+      target: slave
+    container_name: slave_one
+    hostname: slave_one
+    #network_mode: host
+    volumes:
+      - ../..:/dask-jobqueue
+      - userhome:/root
+      - shared_space:/shared_space
+    command: bash /dask-jobqueue/ci/sge/run-slave.sh
+    links:
+      - "master:sge_master"
+    depends_on:
+      - master
+
+  slave-two:
+    image: daskdev/dask-jobqueue:sge-slave
+    build:
+      context: .
+      target: slave
+      args:
+        PYTHON_VERSION: 3.8
+    container_name: slave_two
+    hostname: slave_two
+    #network_mode: host
+    volumes:
+      - ../..:/dask-jobqueue
+      - userhome:/root
+      - shared_space:/shared_space
+    command: bash /dask-jobqueue/ci/sge/run-slave.sh
+    links:
+      - "master:sge_master"
+    depends_on:
+      - master
+
+volumes:
+  userhome:
+  shared_space:
