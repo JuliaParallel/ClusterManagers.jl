@@ -1,0 +1,7 @@
+name: dask-jobqueue
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.8
+  - juliaup
