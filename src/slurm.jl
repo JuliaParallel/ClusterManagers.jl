@@ -20,8 +20,12 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
               "(from the `ClusterManagers.jl` package) are deprecated. " *
               "Consider using the `SlurmClusterManager.jl` package instead."
         funcsym = :addprocs_slurm
-        force = true
-        Base.depwarn(msg, funcsym; force)
+        @static if Base.VERSION >= v"1.3"
+            Base.depwarn(msg, funcsym; force = true)
+        else
+            # Julia 1.2 and earlier do not support the `force` kwarg.
+            Base.depwarn(msg, funcsym)
+        end
     end
     try
         exehome = params[:dir]
