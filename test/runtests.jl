@@ -1,61 +1,51 @@
-using Test
-using ClusterManagers
-using Distributed
+import ClusterManagers
+import Test
 
-is_lsf_installed() = !isnothing(Sys.which("bsub"))
-is_sge_installed() = !isnothing(Sys.which("qsub"))
+import Distributed
 
-@testset "ElasticManager" begin
-    TIMEOUT = 10.
+# Bring some names into scope, just for convenience
+using Distributed: remotecall_fetch
+using Test: @testset, @test, @test_skip
 
-    em = ElasticManager(addr=:auto, port=0)
+slurm_is_installed() = !isnothing(Sys.which("sbatch"))
+lsf_is_installed() = !isnothing(Sys.which("bsub"))
+qsub_is_installed() = !isnothing(Sys.which("qsub"))
 
-    # launch worker
-    run(`sh -c $(ClusterManagers.get_connect_cmd(em))`, wait=false)
+include("elastic.jl")
 
-    # wait at most TIMEOUT seconds for it to connect
-    @test :ok == timedwait(TIMEOUT) do
-        length(em.active) == 1
-    end
-
-    wait(rmprocs(workers()))
-end
-
-if "slurm" in ARGS
-    @testset "Slurm" begin
-	out_file = "my_slurm_job.out"
-        p = addprocs_slurm(1; o=out_file)
-        @test nprocs() == 2
-        @test workers() == p
-        @test fetch(@spawnat :any myid()) == p[1]
-        @test remotecall_fetch(+,p[1],1,1) == 2
-        rmprocs(p)
-        @test nprocs() == 1
-        @test workers() == [1]
-
-	# Check output file creation
-	@test isfile(out_file)
-	rm(out_file)
-    end
+if slurm_is_installed()
+	@info ""
+	include("slurm.jl")
 else
+    @warn "sbatch was not found - Slurm tests will be skipped" Sys.which("sbatch")
+    @test_skip false
 end
-
-
 
 if is_lsf_installed()
 
-@testset "LSFManager" begin
-    p = addprocs_lsf(1, bsub_flags=`-P scicompsoft`)
-    @test nprocs() == 2
-    @test workers() == p
-    @test fetch(@spawnat :any myid()) == p[1]
-    @test remotecall_fetch(+,p[1],1,1) == 2
-    rmprocs(p)
-    @test nprocs() == 1
-    @test workers() == [1]
-end
+
 
 end
+    
+if lsf_is_installed()
+	@info ""
+	include("lsf.jl")
+else
+    @warn "sbatch was not found - Slurm tests will be skipped" Sys.which("sbatch")
+    @test_skip false
+end
+
+if slurm_is_installed()
+	@info ""
+	include("slurm.jl")
+else
+    @warn "sbatch was not found - Slurm tests will be skipped" Sys.which("sbatch")
+    @test_skip false
+end
+
+
+
+
 
 if is_sge_installed()
   @testset "SGEManager" begin
