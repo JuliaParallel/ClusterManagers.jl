@@ -2,6 +2,9 @@ using Test
 using ClusterManagers
 using Distributed
 
+is_lsf_installed() = !isnothing(Sys.which("bsub"))
+is_sge_installed() = !isnothing(Sys.which("qsub"))
+
 @testset "ElasticManager" begin
     TIMEOUT = 10.
 
@@ -34,16 +37,10 @@ if "slurm" in ARGS
 	@test isfile(out_file)
 	rm(out_file)
     end
+else
 end
 
-@static if Sys.iswindows()
-    windows_which(command) = `powershell.exe -Command Get-Command $command`
-    is_lsf_installed() = success(windows_which("bsub.exe"))
-    is_sge_installed() = success(windows_which("qsub.exe"))
-else
-    is_lsf_installed() = success(`which bsub`)
-    is_sge_installed() = success(`which qsub`)
-end
+
 
 if is_lsf_installed()
 
