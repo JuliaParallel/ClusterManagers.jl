@@ -7,6 +7,8 @@ import Distributed
 using Distributed: rmprocs, remotecall_fetch
 using Test: @testset, @test, @test_skip
 
+const test_args = lowercase.(strip.(ARGS))
+
 slurm_is_installed() = !isnothing(Sys.which("sbatch"))
 lsf_is_installed() = !isnothing(Sys.which("bsub"))
 qsub_is_installed() = !isnothing(Sys.which("qsub"))
@@ -17,8 +19,13 @@ if slurm_is_installed()
     @info "Running the Slurm tests..." Sys.which("sbatch")
     include("slurm.jl")
 else
-    @warn "sbatch was not found - Slurm tests will be skipped" Sys.which("sbatch")
-    @test_skip false
+    if "slurm" in test_args
+        @error ""
+        @test false
+    else
+        @warn "sbatch was not found - Slurm tests will be skipped" Sys.which("sbatch")
+        @test_skip false
+    end
 end
 
 if lsf_is_installed()
