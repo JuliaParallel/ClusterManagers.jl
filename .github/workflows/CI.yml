@@ -12,6 +12,25 @@ concurrency:
 permissions:
   contents: read
 jobs:
+  test-unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        version:
+          - '1.2'  # minimum Julia version supported in Project.toml
+          - '1.6'  # previous LTS
+          - '1.10' # current LTS
+          - '1'    # automatically expands to the latest stable 1.x release of Julia
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+    - uses: julia-actions/setup-julia@v2
+      with:
+        version: ${{ matrix.version }}
+    - uses: julia-actions/julia-runtest@v1
   test-slurm:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -29,9 +48,6 @@ jobs:
     - uses: actions/checkout@v4
       with:
         persist-credentials: false
-    - uses: julia-actions/setup-julia@v2
-      with:
-        version: ${{ matrix.version }}
     - name: Print Docker version
       run: |
         docker --version
