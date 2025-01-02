@@ -20,7 +20,7 @@ if slurm_is_installed()
     include("slurm.jl")
 else
     if "slurm" in test_args
-        @error ""
+        @error "ERROR: The Slurm tests were explicitly requested in ARGS, but sbatch was not found, so the Slurm tests cannot be run" test_args Sys.which("sbatch")
         @test false
     else
         @warn "sbatch was not found - Slurm tests will be skipped" Sys.which("sbatch")
