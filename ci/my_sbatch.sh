@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Slurm options:
 #SBATCH --ntasks=2
 #SBATCH --time=00:10:00
 
