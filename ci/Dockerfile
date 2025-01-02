@@ -1,5 +1,6 @@
 # This file is taken from:
 # https://github.com/kleinhenz/SlurmClusterManager.jl
+# Original author: Joseph Kleinhenz
 # License: MIT
 
 FROM jkleinh/slurm-cluster as base
