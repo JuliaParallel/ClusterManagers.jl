@@ -12,7 +12,7 @@ concurrency:
 permissions:
   contents: read
 jobs:
-  test-unit:
+  unit-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -72,9 +72,9 @@ jobs:
         docker exec -t slurmctld ls -la ClusterManagers
     - name: Instantiate package
       run: docker exec -t slurmctld julia --project=ClusterManagers -e 'import Pkg; @show Base.active_project(); Pkg.instantiate(; verbose=true); Pkg.build(; verbose=true); Pkg.status()'
-    - name: Run tests without allocation
+    - name: Run tests without a Slurm allocation
       run: docker exec -t slurmctld julia --project=ClusterManagers -e 'import Pkg; Pkg.test(; test_args=["slurm"])'
-    - name: Run tests inside allocation
+    - name: Run tests inside salloc
       run: docker exec -t slurmctld salloc -t 00:10:00 -n 2 julia --project=ClusterManagers -e 'import Pkg; Pkg.test(test_args=["slurm"])'
     - name: Run tests inside sbatch
-      run: docker exec -t slurmctld ClusterManagers/run_my_sbatch.sh
+      run: docker exec -t slurmctld ClusterManagers/ci/run_my_sbatch.sh
