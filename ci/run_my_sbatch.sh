@@ -4,8 +4,6 @@ set -euf -o pipefail
 
 set -x
 
-which -a sbatch
-
 rm -fv "${HOME:?}/my_stdout.txt"
 rm -fv "${HOME:?}/my_stderr.txt"
 
