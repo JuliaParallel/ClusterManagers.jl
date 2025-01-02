@@ -7,9 +7,15 @@ import Distributed
 using Distributed: rmprocs, remotecall_fetch, workers, @spawnat
 using Test: @testset, @test, @test_skip
 
+# ElasticManager:
+using ClusterManagers: ElasticManager
+
 # Slurm:
 using ClusterManagers: addprocs_slurm, SlurmManager
-# 
+# LSF:
+using ClusterManagers: addprocs_lsf, LSFManager
+# SGE:
+using ClusterManagers: addprocs_sge, SGEManager
 
 const test_args = lowercase.(strip.(ARGS))
 
