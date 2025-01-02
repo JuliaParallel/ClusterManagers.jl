@@ -3,13 +3,14 @@ import Test
 
 import Distributed
 
-# Bring some names into scope, just for convenience
-using Distributed: rmprocs, remotecall_fetch, workers, @spawnat
+# Bring some names into scope, just for convenience:
+using Distributed: addprocs, rmprocs
+using Distributed: workers, nworkers
+using Distributed: procs, nprocs
+using Distributed: remotecall_fetch, @spawnat
 using Test: @testset, @test, @test_skip
-
 # ElasticManager:
 using ClusterManagers: ElasticManager
-
 # Slurm:
 using ClusterManagers: addprocs_slurm, SlurmManager
 # LSF:
