@@ -15,7 +15,10 @@
             @test isfile(out_file)
             # Check that the `out_file` is not empty:
             @test length(strip(read(out_file, String))) > 5
-            rm(out_file)
+
+            # No need to manually delete the `out_file` file.
+            # The entire `tmpdir` will automatically be removed when the `mktempdir() do ...` block ends.
+            # rm(out_file)
         end
     end
 end
