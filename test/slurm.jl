@@ -1,3 +1,5 @@
+using ClusterManagers: addprocs_slurm, SlurmManager
+
 @testset "Slurm" begin
     out_file = "my_slurm_job.out"
     p = addprocs_slurm(1; o=out_file)
