@@ -69,12 +69,9 @@ jobs:
       run: docker exec -t slurmctld julia --project=ClusterManagers -e 'using Pkg; @show Base.active_project(); Pkg.instantiate(; verbose=true); Pkg.build(; verbose=true); Pkg.status()'
     - name: Run tests without allocation
       run: docker exec -t slurmctld julia --project=ClusterManagers -e 'using Pkg; Pkg.test(; test_args=["slurm"])'
-      continue-on-error: true # TODO: Delete this line
     - name: Run tests inside allocation
       run: docker exec -t slurmctld salloc -t 00:10:00 -n 2 julia --project=ClusterManagers -e 'using Pkg; Pkg.test(test_args=["slurm"])'
-      continue-on-error: true # TODO: Delete this line
     - name: Run tests inside sbatch
-      continue-on-error: true # TODO: Delete this line
       run: |
          cat << EOF > sbatch.sh
          #!/bin/bash
