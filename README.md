@@ -13,9 +13,11 @@ Implemented in this package (the `ClusterManagers.jl` package):
 | Sun Grid Engine (SGE) via `qrsh` | `addprocs_qrsh(np::Integer; qsub_flags=``)` or `addprocs(QRSHManager(np, qsub_flags))` |
 | PBS              | `addprocs_pbs(np::Integer; qsub_flags=``)` or `addprocs(PBSManager(np, qsub_flags))` |
 | Scyld | `addprocs_scyld(np::Integer)` or `addprocs(ScyldManager(np))` |
-| HTCondor | `addprocs_htc(np::Integer)` or `addprocs(HTCManager(np))` |
+| HTCondor[^1] | `addprocs_htc(np::Integer)` or `addprocs(HTCManager(np))` |
 | Slurm | `addprocs_slurm(np::Integer; kwargs...)` or `addprocs(SlurmManager(np); kwargs...)` |
 | Local manager with CPU affinity setting | `addprocs(LocalAffinityManager(;np=CPU_CORES, mode::AffinityMode=BALANCED, affinities=[]); kwargs...)` |
+
+[^1]: HTCondor was previously named Condor.
 
 Implemented in external packages:
 
