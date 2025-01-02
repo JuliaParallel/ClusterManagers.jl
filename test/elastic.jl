@@ -1,3 +1,5 @@
+using ClusterManagers: ElasticManager
+
 @testset "ElasticManager" begin
     TIMEOUT = 10.
 
