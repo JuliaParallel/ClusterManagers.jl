@@ -9,8 +9,8 @@ Implemented in this package (the `ClusterManagers.jl` package):
 | Job queue system | Command to add processors |
 | ---------------- | ------------------------- |
 | Load Sharing Facility (LSF) | `addprocs_lsf(np::Integer; bsub_flags=``, ssh_cmd=``)` or `addprocs(LSFManager(np, bsub_flags, ssh_cmd, retry_delays, throttle))` |
-| Sun Grid Engine  | `addprocs_sge(np::Integer; qsub_flags=``)` or `addprocs(SGEManager(np, qsub_flags))` |
-| SGE via qrsh | `addprocs_qrsh(np::Integer; qsub_flags=``)` or `addprocs(QRSHManager(np, qsub_flags))` |
+| Sun Grid Engine (SGE) via `qsub` | `addprocs_sge(np::Integer; qsub_flags=``)` or `addprocs(SGEManager(np, qsub_flags))` |
+| Sun Grid Engine (SGE) via `qrsh` | `addprocs_qrsh(np::Integer; qsub_flags=``)` or `addprocs(QRSHManager(np, qsub_flags))` |
 | PBS              | `addprocs_pbs(np::Integer; qsub_flags=``)` or `addprocs(PBSManager(np, qsub_flags))` |
 | Scyld | `addprocs_scyld(np::Integer)` or `addprocs(ScyldManager(np))` |
 | HTCondor | `addprocs_htc(np::Integer)` or `addprocs(HTCManager(np))` |
