@@ -72,12 +72,4 @@ jobs:
     - name: Run tests inside allocation
       run: docker exec -t slurmctld salloc -t 00:10:00 -n 2 julia --project=ClusterManagers -e 'using Pkg; Pkg.test(test_args=["slurm"])'
     - name: Run tests inside sbatch
-      run: |
-         cat << EOF > sbatch.sh
-         #!/bin/bash
-         #SBATCH --ntasks=2
-         #SBATCH --time=00:10:00
-         /julia/bin/julia --project=ClusterManagers -e 'using Pkg; Pkg.test(test_args=["slurm"])'
-         EOF
-         docker exec slurm-$SLURM sbatch --wait --output=/SlurmTools/output --error=/SlurmTools/output /SlurmTools/sbatch.sh
-         cat output
+      run: docker exec -t slurmctld run_my_sbatch.sh
