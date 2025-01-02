@@ -13,18 +13,18 @@ permissions:
   contents: read
 jobs:
   test-slurm:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
-        julia_version:
-          - '1.2' # Oldest version of Julia that this package supports (according to Project.toml)
-          - '1.6' # Previous LTS
-          - '1.10' # Current LTS
-          - '1' # automatically expands to the latest stable 1.x release of Julia
-          - "nightly"
+        version:
+          # Please note: You must specify the full Julia version number (major.minor.patch).
+          # This is because the value here will be directly interpolated into a download URL.
+          - '1.2.0'  # minimum Julia version supported in Project.toml
+          - '1.6.7'  # previous LTS
+          - '1.10.7' # current LTS
+          - '1.11.2' # currently the latest stable release
     steps:
     - uses: actions/checkout@v4
       with:
@@ -44,9 +44,11 @@ jobs:
       run: |
         docker version
         docker compose version
-        docker build --build-arg JULIA_VERSION=${{matrix.version}} -t slurm-cluster-julia -f ci/Dockerfile .
+        docker build --build-arg "JULIA_VERSION=${MATRIX_JULIA_VERSION:?}" -t slurm-cluster-julia -f ci/Dockerfile .
         docker compose -f ci/docker-compose.yml up -d
         docker ps
+      env:
+        MATRIX_JULIA_VERSION: ${{matrix.version}}
     - name: Instantiate package
       run: docker exec -t slurmctld /julia/bin/julia --project=/SlurmTools -e 'using Pkg; Pkg.instantiate(verbose=true); Pkg.build(verbose=true)'
       continue-on-error: true # TODO: Delete this line
