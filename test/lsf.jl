@@ -1,3 +1,5 @@
+using ClusterManagers: addprocs_lsf, LSFManager
+
 @testset "LSFManager" begin
     p = addprocs_lsf(1, bsub_flags=`-P scicompsoft`)
     @test nprocs() == 2
