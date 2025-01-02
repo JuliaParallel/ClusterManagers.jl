@@ -4,6 +4,8 @@ Support for different job queue systems commonly used on compute clusters.
 
 ## Currently supported job queue systems
 
+Implemented in this package (the `ClusterManagers.jl` package):
+
 | Job queue system | Command to add processors |
 | ---------------- | ------------------------- |
 | Load Sharing Facility (LSF) | `addprocs_lsf(np::Integer; bsub_flags=``, ssh_cmd=``)` or `addprocs(LSFManager(np, bsub_flags, ssh_cmd, retry_delays, throttle))` |
@@ -14,6 +16,11 @@ Support for different job queue systems commonly used on compute clusters.
 | HTCondor | `addprocs_htc(np::Integer)` or `addprocs(HTCManager(np))` |
 | Slurm | `addprocs_slurm(np::Integer; kwargs...)` or `addprocs(SlurmManager(np); kwargs...)` |
 | Local manager with CPU affinity setting | `addprocs(LocalAffinityManager(;np=CPU_CORES, mode::AffinityMode=BALANCED, affinities=[]); kwargs...)` |
+
+Implemented in external packages:
+
+| Job queue system | Command to add processors |
+| ---------------- | ------------------------- |
 | Kubernetes (K8s) via [K8sClusterManagers.jl](https://github.com/beacon-biosignals/K8sClusterManagers.jl) | `addprocs(K8sClusterManagers(np; kwargs...))` |
 | Azure scale-sets via [AzManagers.jl](https://github.com/ChevronETC/AzManagers.jl) | `addprocs(vmtemplate, n; kwargs...)` |
 
