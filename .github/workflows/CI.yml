@@ -31,7 +31,7 @@ jobs:
         persist-credentials: false
     - uses: julia-actions/setup-julia@v2
       with:
-        version: ${{ matrix.julia_version }}
+        version: ${{ matrix.version }}
     - name: Print Docker version
       run: |
         docker --version
