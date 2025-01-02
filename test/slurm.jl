@@ -1,8 +1,8 @@
 @testset "Slurm" begin
     mktempdir() do tmpdir
         cd(tmpdir) do
-            out_file = joinpath(tmpdir, "my_slurm_job.out")
-            p = addprocs_slurm(1; o=out_file)
+            outfile = joinpath(tmpdir, "my_slurm_job.out")
+            p = addprocs_slurm(1; o=outfile)
             @test nprocs() == 2
             @test workers() == p
             @test fetch(@spawnat :any myid()) == p[1]
@@ -11,14 +11,19 @@
             @test nprocs() == 1
             @test workers() == [1]
             
-            # Check that the `out_file` file exists:
-            @test isfile(out_file)
-            # Check that the `out_file` is not empty:
-            @test length(strip(read(out_file, String))) > 5
+            # Check that `outfile` exists:
+            @test isfile(outfile)
+            # Check that `outfile` is not empty:
+            outfile_contents = read(outfile, String)
+            @test length(strip(outfile_contents)) > 5
 
-            # No need to manually delete the `out_file` file.
+            println(Base.stderr, "# BEGIN: contents of my_slurm_job.out")
+            println(Base.stderr, outfile_contents)
+            println(Base.stderr, "# END: contents of my_slurm_job.out")
+
+            # No need to manually delete the `outfile` file.
             # The entire `tmpdir` will automatically be removed when the `mktempdir() do ...` block ends.
-            # rm(out_file)
+            # rm(outfile)
         end
     end
 end
