@@ -1,0 +1,100 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+concurrency:
+  # Skip intermediate builds: all builds except for builds on the `master` branch
+  # Cancel intermediate builds: only pull request builds
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.ref != 'refs/heads/master' || github.run_number }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+permissions:
+  contents: read
+jobs:
+  finalize:
+    timeout-minutes: 10
+    needs:
+      - unit-tests
+      - test-slurm
+    # Important: the next line MUST be `if: always()`.
+    # Do not change that line.
+    # That line is necessary to make sure that this job runs even if tests fail.
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo unit-tests: ${{ needs.unit-tests.result }}
+          echo test-slurm: ${{ needs.test-slurm.result }}
+      - run: exit 1
+        # The last line must NOT end with ||
+        # All other lines MUST end with ||
+        if: |
+          (needs.unit-tests.result != 'success') ||
+          (needs.test-slurm.result != 'success')
+  unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        version:
+          - '1.2'  # minimum Julia version supported in Project.toml
+          - '1.6'  # previous LTS
+          - '1.10' # current LTS
+          - '1'    # automatically expands to the latest stable 1.x release of Julia
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+    - uses: julia-actions/setup-julia@v2
+      with:
+        version: ${{ matrix.version }}
+    - uses: julia-actions/julia-runtest@v1
+  test-slurm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        version:
+          # Please note: You must specify the full Julia version number (major.minor.patch).
+          # This is because the value here will be directly interpolated into a download URL.
+          # - '1.2.0'  # minimum Julia version supported in Project.toml
+          - '1.6.7'  # previous LTS
+          - '1.10.7' # current LTS
+          - '1.11.2' # currently the latest stable release
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+    - name: Print Docker version
+      run: |
+        docker --version
+        docker version
+    # This next bit of code is taken from:
+    # https://github.com/kleinhenz/SlurmClusterManager.jl
+    # Original author: Joseph Kleinhenz
+    # License: MIT
+    - name: Setup Slurm inside Docker
+      run: |
+        docker version
+        docker compose version
+        docker build --build-arg "JULIA_VERSION=${MATRIX_JULIA_VERSION:?}" -t slurm-cluster-julia -f ci/Dockerfile .
+        docker compose -f ci/docker-compose.yml up -d
+        docker ps
+      env:
+        MATRIX_JULIA_VERSION: ${{matrix.version}}
+    - name: Print some information for debugging purposes
+      run: |
+        docker exec -t slurmctld pwd
+        docker exec -t slurmctld ls -la
+        docker exec -t slurmctld ls -la ClusterManagers
+    - name: Instantiate package
+      run: docker exec -t slurmctld julia --project=ClusterManagers -e 'import Pkg; @show Base.active_project(); Pkg.instantiate(); Pkg.status()'
+    - name: Run tests without a Slurm allocation
+      run: docker exec -t slurmctld julia --project=ClusterManagers -e 'import Pkg; Pkg.test(; test_args=["slurm"])'
+    - name: Run tests inside salloc
+      run: docker exec -t slurmctld salloc -t 00:10:00 -n 2 julia --project=ClusterManagers -e 'import Pkg; Pkg.test(test_args=["slurm"])'
+    - name: Run tests inside sbatch
+      run: docker exec -t slurmctld ClusterManagers/ci/run_my_sbatch.sh

@@ -120,7 +120,7 @@ function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
                     @info "Worker $i (after $t_waited s): No output file \"$fn\" yet"
                 end
 
-                # Sleep for some time to limit ressource usage while waiting for the job to start
+                # Sleep for some time to limit resource usage while waiting for the job to start
                 sleep(retry_delay)
             end
 
