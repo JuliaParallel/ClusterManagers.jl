@@ -2,7 +2,7 @@
 
 Support for different job queue systems commonly used on compute clusters.
 
-## Currently supported job queue systems
+## Available job queue systems
 
 Implemented in this package (the `ClusterManagers.jl` package):
 
