@@ -4,7 +4,13 @@ set -euf -o pipefail
 
 set -x
 
+which -a sbatch
+
 rm -fv "${HOME:?}/my_stdout.txt"
 rm -fv "${HOME:?}/my_stderr.txt"
 
 sbatch --wait --output="${HOME:?}/my_stdout.txt" --error="${HOME:?}/my_stderr.txt" ./ClusterManagers/ci/my_sbatch.sh
+
+sleep 5
+cat "${HOME:?}/my_stdout.txt"
+cat "${HOME:?}/my_stderr.txt"
