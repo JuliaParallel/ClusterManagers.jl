@@ -4,7 +4,7 @@ import Test
 import Distributed
 
 # Bring some names into scope, just for convenience
-using Distributed: remotecall_fetch
+using Distributed: rmprocs, remotecall_fetch
 using Test: @testset, @test, @test_skip
 
 slurm_is_installed() = !isnothing(Sys.which("sbatch"))
