@@ -12,6 +12,24 @@ concurrency:
 permissions:
   contents: read
 jobs:
+  finalize:
+    timeout-minutes: 10
+    needs:
+      - unit-tests
+      - test-slurm
+    # Important: the next line MUST be `if: always()`.
+    # Do not change that line.
+    # That line is necessary to make sure that this job runs even if tests fail.
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo unit-tests: ${{ needs.unit-tests.result }}
+          echo test-slurm: ${{ needs.test-slurm.result }}
+      - run: exit 1
+        if: |
+          (needs.unit-tests.result != 'success') ||
+          (needs.test-slurm.result != 'success') ||
   unit-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 20
