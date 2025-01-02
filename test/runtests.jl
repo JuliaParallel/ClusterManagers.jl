@@ -14,48 +14,25 @@ qsub_is_installed() = !isnothing(Sys.which("qsub"))
 include("elastic.jl")
 
 if slurm_is_installed()
-	@info ""
-	include("slurm.jl")
+    @info "Running the Slurm tests..." Sys.which("sbatch")
+    include("slurm.jl")
 else
     @warn "sbatch was not found - Slurm tests will be skipped" Sys.which("sbatch")
     @test_skip false
 end
 
-if is_lsf_installed()
-
-
-
-end
-    
 if lsf_is_installed()
-	@info ""
-	include("lsf.jl")
+    @info "Running the LSF tests..." Sys.which("bsub")
+    include("lsf.jl")
 else
-    @warn "sbatch was not found - Slurm tests will be skipped" Sys.which("sbatch")
+    @warn "bsub was not found - LSF tests will be skipped" Sys.which("bsub")
     @test_skip false
 end
 
-if slurm_is_installed()
-	@info ""
-	include("slurm.jl")
+if qsub_is_installed()
+    @info "Running the SGE tests..." Sys.which("qsub")
+    include("slurm.jl")
 else
-    @warn "sbatch was not found - Slurm tests will be skipped" Sys.which("sbatch")
+    @warn "qsub was not found - SGE tests will be skipped" Sys.which("qsub")
     @test_skip false
-end
-
-
-
-
-
-if is_sge_installed()
-  @testset "SGEManager" begin
-    p = addprocs_sge(1, queue=``)
-    @test nprocs() == 2
-    @test workers() == p
-    @test fetch(@spawnat :any myid()) == p[1]
-    @test remotecall_fetch(+,p[1],1,1) == 2
-    rmprocs(p)
-    @test nprocs() == 1
-    @test workers() == [1]
-  end
 end
