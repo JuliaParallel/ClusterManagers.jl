@@ -1,69 +1,71 @@
-using Test
-using ClusterManagers
-using Distributed
+import ClusterManagers
+import Test
 
-@testset "ElasticManager" begin
-    TIMEOUT = 10.
+import Distributed
 
-    em = ElasticManager(addr=:auto, port=0)
+# Bring some names into scope, just for convenience:
+using Distributed: addprocs, rmprocs
+using Distributed: workers, nworkers
+using Distributed: procs, nprocs
+using Distributed: remotecall_fetch, @spawnat
+using Test: @testset, @test, @test_skip
+# ElasticManager:
+using ClusterManagers: ElasticManager
+# Slurm:
+using ClusterManagers: addprocs_slurm, SlurmManager
+# LSF:
+using ClusterManagers: addprocs_lsf, LSFManager
+# SGE:
+using ClusterManagers: addprocs_sge, SGEManager
 
-    # launch worker
-    run(`sh -c $(ClusterManagers.get_connect_cmd(em))`, wait=false)
+const test_args = lowercase.(strip.(ARGS))
 
-    # wait at most TIMEOUT seconds for it to connect
-    @test :ok == timedwait(TIMEOUT) do
-        length(em.active) == 1
+@info "" test_args
+
+slurm_is_installed() = !isnothing(Sys.which("sbatch"))
+lsf_is_installed() = !isnothing(Sys.which("bsub"))
+qsub_is_installed() = !isnothing(Sys.which("qsub"))
+
+@testset "ClusterManagers.jl" begin
+    include("elastic.jl")
+    
+    if slurm_is_installed()
+        @info "Running the Slurm tests..." Sys.which("sbatch")
+        include("slurm.jl")
+    else
+        if "slurm" in test_args
+            @error "ERROR: The Slurm tests were explicitly requested in ARGS, but sbatch was not found, so the Slurm tests cannot be run" Sys.which("sbatch") test_args
+            @test false
+        else
+            @warn "sbatch was not found - Slurm tests will be skipped" Sys.which("sbatch")
+            @test_skip false
+        end
+    end
+    
+    if lsf_is_installed()
+        @info "Running the LSF tests..." Sys.which("bsub")
+        include("lsf.jl")
+    else
+        if "lsf" in test_args
+            @error "ERROR: The LSF tests were explicitly requested in ARGS, but bsub was not found, so the LSF tests cannot be run" Sys.which("bsub") test_args
+            @test false
+        else
+            @warn "bsub was not found - LSF tests will be skipped" Sys.which("bsub")
+            @test_skip false
+        end
+    end
+    
+    if qsub_is_installed()
+        @info "Running the SGE (via qsub) tests..." Sys.which("qsub")
+        include("slurm.jl")
+    else
+        if "sge_qsub" in test_args
+            @error "ERROR: The SGE tests were explicitly requested in ARGS, but qsub was not found, so the SGE tests cannot be run" Sys.which("qsub") test_args
+            @test false
+        else
+            @warn "qsub was not found - SGE tests will be skipped" Sys.which("qsub")
+            @test_skip false
+        end
     end
 
-    wait(rmprocs(workers()))
-end
-
-if "slurm" in ARGS
-    @testset "Slurm" begin
-        p = addprocs_slurm(1)
-        @test nprocs() == 2
-        @test workers() == p
-        @test fetch(@spawnat :any myid()) == p[1]
-        @test remotecall_fetch(+,p[1],1,1) == 2
-        rmprocs(p)
-        @test nprocs() == 1
-        @test workers() == [1]
-    end
-end
-
-@static if Sys.iswindows()
-    windows_which(command) = `powershell.exe -Command Get-Command $command`
-    is_lsf_installed() = success(windows_which("bsub.exe"))
-    is_sge_installed() = success(windows_which("qsub.exe"))
-else
-    is_lsf_installed() = success(`which bsub`)
-    is_sge_installed() = success(`which qsub`)
-end
-
-if is_lsf_installed()
-
-@testset "LSFManager" begin
-    p = addprocs_lsf(1, bsub_flags=`-P scicompsoft`)
-    @test nprocs() == 2
-    @test workers() == p
-    @test fetch(@spawnat :any myid()) == p[1]
-    @test remotecall_fetch(+,p[1],1,1) == 2
-    rmprocs(p)
-    @test nprocs() == 1
-    @test workers() == [1]
-end
-
-end
-
-if is_sge_installed()
-  @testset "SGEManager" begin
-    p = addprocs_sge(1, queue=``)
-    @test nprocs() == 2
-    @test workers() == p
-    @test fetch(@spawnat :any myid()) == p[1]
-    @test remotecall_fetch(+,p[1],1,1) == 2
-    rmprocs(p)
-    @test nprocs() == 1
-    @test workers() == [1]
-  end
-end
+end # @testset
