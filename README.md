@@ -1,6 +1,6 @@
-# ClusterManagers
+# ClusterManagers.jl
 
-Support for different job queue systems commonly used on compute clusters.
+The `ClusterManager.jl` package implements code for different job queue systems commonly used on compute clusters.
 
 ## Available job queue systems
 
