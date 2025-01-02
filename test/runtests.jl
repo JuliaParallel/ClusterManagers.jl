@@ -4,7 +4,7 @@ import Test
 import Distributed
 
 # Bring some names into scope, just for convenience
-using Distributed: rmprocs, remotecall_fetch, workers
+using Distributed: rmprocs, remotecall_fetch, workers, @spawnat
 using Test: @testset, @test, @test_skip
 
 const test_args = lowercase.(strip.(ARGS))
