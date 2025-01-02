@@ -7,6 +7,10 @@ import Distributed
 using Distributed: rmprocs, remotecall_fetch, workers, @spawnat
 using Test: @testset, @test, @test_skip
 
+# Slurm:
+using ClusterManagers: addprocs_slurm, SlurmManager
+# 
+
 const test_args = lowercase.(strip.(ARGS))
 
 @info "" test_args
