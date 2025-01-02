@@ -23,17 +23,27 @@ jobs:
     env:
       SLURM: "latest"
     steps:
-    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+    - uses: actions/checkout@v4
       with:
         persist-credentials: false
-    - uses: julia-actions/setup-julia@9b79636afcfb07ab02c256cede01fe2db6ba808c # v2.6.0
+    - uses: julia-actions/setup-julia@v2
       with:
-        arch: ${{ matrix.julia_arch }}
         version: ${{ matrix.julia_version }}
     - name: Print Docker version
       run: |
         docker --version
         docker version
+
+    # This bit is based on https://github.com/kleinhenz/SlurmClusterManager.jl
+    # License: MIT
+    - name: Setup Slurm inside Docker
+      run: |
+        docker version
+        docker compose version
+        docker build --build-arg JULIA_VERSION=${{matrix.version}} -t slurm-cluster-julia -f ci/Dockerfile .
+        docker compose -f ci/docker-compose.yml up -d
+        docker ps
+        
     - name: Start Slurm Docker image
       run: |
         docker pull giovtorres/docker-centos7-slurm:$SLURM
