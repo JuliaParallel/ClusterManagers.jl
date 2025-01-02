@@ -66,13 +66,12 @@ jobs:
       env:
         MATRIX_JULIA_VERSION: ${{matrix.version}}
     - name: Instantiate package
-      run: docker exec -t slurmctld /julia/bin/julia --project=/SlurmTools -e 'using Pkg; Pkg.instantiate(verbose=true); Pkg.build(verbose=true)'
-      continue-on-error: true # TODO: Delete this line
+      run: docker exec -t slurmctld julia --project=/SlurmTools -e 'using Pkg; Pkg.instantiate(; verbose=true); Pkg.build(; verbose=true)'
     - name: Run tests without allocation
-      run: docker exec -t slurmctld /julia/bin/julia --project=/SlurmTools -e 'using Pkg; Pkg.test(test_args=["slurm"])'
+      run: docker exec -t slurmctld julia --project=/SlurmTools -e 'using Pkg; Pkg.test(; test_args=["slurm"])'
       continue-on-error: true # TODO: Delete this line
     - name: Run tests inside allocation
-      run: docker exec -t slurmctld salloc -t 00:10:00 -n 2 /julia/bin/julia --project=/SlurmTools -e 'using Pkg; Pkg.test(test_args=["slurm"])'
+      run: docker exec -t slurmctld salloc -t 00:10:00 -n 2 julia --project=/SlurmTools -e 'using Pkg; Pkg.test(test_args=["slurm"])'
       continue-on-error: true # TODO: Delete this line
     - name: Run tests inside sbatch
       continue-on-error: true # TODO: Delete this line
