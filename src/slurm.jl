@@ -15,6 +15,14 @@ end
 
 function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
                 c::Condition)
+    let
+        msg = "`ClusterManagers.addprocs_slurm` and `ClusterManagers.SlurmManager` " *
+              "(from the `ClusterManagers.jl` package) are deprecated. " *
+              "Consider using the `SlurmClusterManager.jl` package instead."
+        funcsym = :addprocs_slurm
+        force = true
+        Base.depwarn(msg, funcsym; force)
+    end
     try
         exehome = params[:dir]
         exename = params[:exename]
