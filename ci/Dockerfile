@@ -16,6 +16,6 @@ RUN mkdir -p /home/docker/.local/opt/julia \
 
 ENV PATH="/home/docker/.local/opt/julia/bin:${PATH}"
 
-COPY --chown=docker . SlurmClusterManager
+COPY --chown=docker . ClusterManagers
 
 CMD /bin/bash -l
