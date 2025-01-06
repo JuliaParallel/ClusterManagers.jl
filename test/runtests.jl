@@ -13,8 +13,6 @@ using Test: @testset, @test, @test_skip
 using ClusterManagers: ElasticManager
 # Slurm:
 using ClusterManagers: addprocs_slurm, SlurmManager
-# LSF:
-using ClusterManagers: addprocs_lsf, LSFManager
 # SGE:
 using ClusterManagers: addprocs_sge, SGEManager
 
@@ -23,12 +21,11 @@ const test_args = lowercase.(strip.(ARGS))
 @info "" test_args
 
 slurm_is_installed() = !isnothing(Sys.which("sbatch"))
-lsf_is_installed() = !isnothing(Sys.which("bsub"))
 qsub_is_installed() = !isnothing(Sys.which("qsub"))
 
 @testset "ClusterManagers.jl" begin
     include("elastic.jl")
-    
+
     if slurm_is_installed()
         @info "Running the Slurm tests..." Sys.which("sbatch")
         include("slurm.jl")
@@ -41,20 +38,7 @@ qsub_is_installed() = !isnothing(Sys.which("qsub"))
             @test_skip false
         end
     end
-    
-    if lsf_is_installed()
-        @info "Running the LSF tests..." Sys.which("bsub")
-        include("lsf.jl")
-    else
-        if "lsf" in test_args
-            @error "ERROR: The LSF tests were explicitly requested in ARGS, but bsub was not found, so the LSF tests cannot be run" Sys.which("bsub") test_args
-            @test false
-        else
-            @warn "bsub was not found - LSF tests will be skipped" Sys.which("bsub")
-            @test_skip false
-        end
-    end
-    
+
     if qsub_is_installed()
         @info "Running the SGE (via qsub) tests..." Sys.which("qsub")
         include("slurm.jl")
