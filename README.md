@@ -15,7 +15,6 @@ Implemented in this package (the `ClusterManagers.jl` package):
 
 | Job queue system | Command to add processors |
 | ---------------- | ------------------------- |
-
 | Sun Grid Engine (SGE) via `qsub` | `addprocs_sge(np::Integer; qsub_flags=``)` or `addprocs(SGEManager(np, qsub_flags))` |
 | Sun Grid Engine (SGE) via `qrsh` | `addprocs_qrsh(np::Integer; qsub_flags=``)` or `addprocs(QRSHManager(np, qsub_flags))` |
 | PBS (Portable Batch System) | `addprocs_pbs(np::Integer; qsub_flags=``)` or `addprocs(PBSManager(np, qsub_flags))` |
