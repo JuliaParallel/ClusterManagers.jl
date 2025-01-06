@@ -15,7 +15,7 @@ Implemented in this package (the `ClusterManagers.jl` package):
 
 | Job queue system | Command to add processors |
 | ---------------- | ------------------------- |
-| Load Sharing Facility (LSF) | `addprocs_lsf(np::Integer; bsub_flags=``, ssh_cmd=``)` or `addprocs(LSFManager(np, bsub_flags, ssh_cmd, retry_delays, throttle))` |
+
 | Sun Grid Engine (SGE) via `qsub` | `addprocs_sge(np::Integer; qsub_flags=``)` or `addprocs(SGEManager(np, qsub_flags))` |
 | Sun Grid Engine (SGE) via `qrsh` | `addprocs_qrsh(np::Integer; qsub_flags=``)` or `addprocs(QRSHManager(np, qsub_flags))` |
 | PBS (Portable Batch System) | `addprocs_pbs(np::Integer; qsub_flags=``)` or `addprocs(PBSManager(np, qsub_flags))` |
@@ -32,6 +32,7 @@ Implemented in external packages:
 | ---------------- | ------------------------- |
 | Kubernetes (K8s) via [K8sClusterManagers.jl](https://github.com/beacon-biosignals/K8sClusterManagers.jl) | `addprocs(K8sClusterManager(np; kwargs...))` |
 | Azure scale-sets via [AzManagers.jl](https://github.com/ChevronETC/AzManagers.jl) | `addprocs(vmtemplate, n; kwargs...)` |
+| Load Sharing Facility (LSF) via [LSFClusterManager.jl](https://github.com/JuliaParallel/LSFClusterManager.jl) | `addprocs_lsf(np::Integer; bsub_flags=``, ssh_cmd=``)` or `addprocs(LSFManager(np, bsub_flags, ssh_cmd, retry_delays, throttle))` |
 
 You can also write your own custom cluster manager; see the instructions in the [Julia manual](https://docs.julialang.org/en/v1/manual/distributed-computing/#ClusterManagers).
 
@@ -93,7 +94,7 @@ julia>  From worker 2:  compute-6
         From worker 3:  compute-6
 ```
 
-Some clusters require the user to specify a list of required resources. 
+Some clusters require the user to specify a list of required resources.
 For example, it may be necessary to specify how much memory will be needed by the job - see this [issue](https://github.com/JuliaLang/julia/issues/10390).
 The keyword `qsub_flags` can be used to specify these and other options.
 Additionally the keyword `wd` can be used to specify the working directory (which defaults to `ENV["HOME"]`).
@@ -131,11 +132,6 @@ that are tuned to make heavy use of caching to increase throughput, launching
 Julia workers can frequently timeout waiting for the standard output files to appear.
 In this case, it's better to use the `QRSHManager`, which uses SGE's `qrsh`
 command to bypass the filesystem and captures STDOUT directly.
-
-### Load Sharing Facility (LSF)
-
-`LSFManager` supports IBM's scheduler.  See the `addprocs_lsf` docstring
-for more information.
 
 ### Using `LocalAffinityManager` (for pinning local workers to specific cores)
 
@@ -176,10 +172,10 @@ ElasticManager:
   Active workers : []
   Number of workers to be added  : 0
   Terminated workers : []
-  Worker connect command : 
+  Worker connect command :
     /home/user/bin/julia --project=/home/user/myproject/Project.toml -e 'using ClusterManagers; ClusterManagers.elastic_worker("4cOSyaYpgSl6BC0C","127.0.1.1",36275)'
 ```
 
-By default, the printed command uses the absolute path to the current Julia executable and activates the same project as the current session. You can change either of these defaults by passing `printing_kwargs=(absolute_exename=false, same_project=false))` to the first form of the `ElasticManager` constructor. 
+By default, the printed command uses the absolute path to the current Julia executable and activates the same project as the current session. You can change either of these defaults by passing `printing_kwargs=(absolute_exename=false, same_project=false))` to the first form of the `ElasticManager` constructor.
 
-Once workers are connected, you can print the `em` object again to see them added to the list of active workers. 
+Once workers are connected, you can print the `em` object again to see them added to the list of active workers.
