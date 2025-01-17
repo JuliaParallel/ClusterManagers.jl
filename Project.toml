@@ -1,6 +1,6 @@
 name = "ClusterManagers"
 uuid = "34f1f09b-3a8b-5176-ab39-66d58a4d544e"
-version = "0.4.7"
+version = "0.4.8"
 
 [deps]
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
