@@ -1,4 +1,4 @@
-# ClusterManager for HTCondor
+# `LocalAffinityManager` (for pinning local workers to specific cores)
 
 export LocalAffinityManager, AffinityMode, COMPACT, BALANCED
 
