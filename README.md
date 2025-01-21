@@ -93,7 +93,7 @@ julia>  From worker 2:  compute-6
         From worker 3:  compute-6
 ```
 
-Some clusters require the user to specify a list of required resources. 
+Some clusters require the user to specify a list of required resources.
 For example, it may be necessary to specify how much memory will be needed by the job - see this [issue](https://github.com/JuliaLang/julia/issues/10390).
 The keyword `qsub_flags` can be used to specify these and other options.
 Additionally the keyword `wd` can be used to specify the working directory (which defaults to `ENV["HOME"]`).
@@ -176,10 +176,10 @@ ElasticManager:
   Active workers : []
   Number of workers to be added  : 0
   Terminated workers : []
-  Worker connect command : 
+  Worker connect command :
     /home/user/bin/julia --project=/home/user/myproject/Project.toml -e 'using ClusterManagers; ClusterManagers.elastic_worker("4cOSyaYpgSl6BC0C","127.0.1.1",36275)'
 ```
 
-By default, the printed command uses the absolute path to the current Julia executable and activates the same project as the current session. You can change either of these defaults by passing `printing_kwargs=(absolute_exename=false, same_project=false))` to the first form of the `ElasticManager` constructor. 
+By default, the printed command uses the absolute path to the current Julia executable and activates the same project as the current session. You can change either of these defaults by passing `printing_kwargs=(absolute_exename=false, same_project=false))` to the first form of the `ElasticManager` constructor.
 
-Once workers are connected, you can print the `em` object again to see them added to the list of active workers. 
+Once workers are connected, you can print the `em` object again to see them added to the list of active workers.

@@ -40,13 +40,13 @@ function lsf_bpeek(manager::LSFManager, jobid, iarray)
     worker_started, bytestr, host, port = parse_host_port(stream)
     worker_started && return stream, host, port
 
-    for retry_delay in retry_delays 
-        # isempty is for the case when -f flag is not used to handle the case when 
+    for retry_delay in retry_delays
+        # isempty is for the case when -f flag is not used to handle the case when
         # the << output from ... >> message is printed but the julia worker has not
         # yet printed the ip and port nr
         if isempty(bytestr) || occursin("Not yet started", bytestr)
             # bpeek process would have stopped
-            # stream starts spewing out empty strings after this (in julia != 1.6) 
+            # stream starts spewing out empty strings after this (in julia != 1.6)
             # instead of trying to handle that we just close it and open a new stream
             wait(streamer_proc)
             close(stream)
@@ -54,7 +54,7 @@ function lsf_bpeek(manager::LSFManager, jobid, iarray)
 
             # Try bpeeking again after the retry delay
             sleep(retry_delay)
-            streamer_proc = run(pipeline(streamer_cmd; stdout=stream, stderr=stream); wait=false)                   
+            streamer_proc = run(pipeline(streamer_cmd; stdout=stream, stderr=stream); wait=false)
         elseif occursin("<< output from stdout >>", bytestr) || occursin("<< output from stderr >>", bytestr)
             # ignore this bpeek output decoration and continue to read the next line
             mark(stream)
@@ -63,7 +63,7 @@ function lsf_bpeek(manager::LSFManager, jobid, iarray)
             close(stream)
             throw(LSFException(bytestr))
         end
-        
+
         worker_started, bytestr, host, port = parse_host_port(stream)
         worker_started && break
     end
@@ -111,7 +111,7 @@ function launch(manager::LSFManager, params::Dict, launched::Array, c::Condition
         asyncmap((i)->lsf_launch_and_monitor(manager, launched, c, jobid, i),
                  1:np;
                  ntasks=manager.throttle)
- 
+
     catch e
         println("Error launching workers")
         println(e)

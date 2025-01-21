@@ -28,7 +28,7 @@ qsub_is_installed() = !isnothing(Sys.which("qsub"))
 
 @testset "ClusterManagers.jl" begin
     include("elastic.jl")
-    
+
     if slurm_is_installed()
         @info "Running the Slurm tests..." Sys.which("sbatch")
         include("slurm.jl")
@@ -41,7 +41,7 @@ qsub_is_installed() = !isnothing(Sys.which("qsub"))
             @test_skip false
         end
     end
-    
+
     if lsf_is_installed()
         @info "Running the LSF tests..." Sys.which("bsub")
         include("lsf.jl")
@@ -54,7 +54,7 @@ qsub_is_installed() = !isnothing(Sys.which("qsub"))
             @test_skip false
         end
     end
-    
+
     if qsub_is_installed()
         @info "Running the SGE (via qsub) tests..." Sys.which("qsub")
         include("slurm.jl")

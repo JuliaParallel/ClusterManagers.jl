@@ -26,7 +26,7 @@ struct ElasticManager <: ClusterManager
                 error("Failed to automatically get host's IP address. Please specify `addr=` explicitly.")
             end
         end
-        
+
         l_sock = listen(addr, port)
 
         lman = new(Dict{Int, WorkerConfig}(), Channel{TCPSocket}(typemax(Int)), Set{Int}(), topology, getsockname(l_sock), printing_kwargs)
@@ -125,7 +125,7 @@ function Base.show(io::IO, mgr::ElasticManager)
 
     println(iob, "  Worker connect command : ")
     print(iob, "    ", get_connect_cmd(mgr; mgr.printing_kwargs...))
-    
+
     print(io, String(take!(iob)))
 end
 
@@ -140,17 +140,17 @@ function elastic_worker(cookie, addr="127.0.0.1", port=9009; stdout_to_master=tr
 end
 
 function get_connect_cmd(em::ElasticManager; absolute_exename=true, same_project=true)
-    
+
     ip = string(em.sockname[1])
     port = convert(Int,em.sockname[2])
     cookie = cluster_cookie()
     exename = absolute_exename ? joinpath(Sys.BINDIR, Base.julia_exename()) : "julia"
     project = same_project ? ("--project=$(Pkg.API.Context().env.project_file)",) : ()
-    
+
     join([
         exename,
         project...,
         "-e 'using ClusterManagers; ClusterManagers.elastic_worker(\"$cookie\",\"$ip\",$port)'"
     ]," ")
-    
+
 end

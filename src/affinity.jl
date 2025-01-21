@@ -50,4 +50,3 @@ function manage(manager::LocalAffinityManager, id::Integer, config::WorkerConfig
         kill(get(config.process), 2)
     end
 end
-

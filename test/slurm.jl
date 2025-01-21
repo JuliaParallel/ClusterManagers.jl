@@ -10,7 +10,7 @@
             rmprocs(p)
             @test nprocs() == 1
             @test workers() == [1]
-            
+
             # Check that `outfile` exists:
             @test isfile(outfile)
             # Check that `outfile` is not empty:
