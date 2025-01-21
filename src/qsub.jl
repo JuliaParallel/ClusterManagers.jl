@@ -41,7 +41,7 @@ function launch(manager::Union{PBSManager, SGEManager, QRSHManager},
           for i in 1:np
               config = WorkerConfig()
               config.io, io_proc = stream_proc[i]
-              config.userdata = Dict{Symbol, Any}(:task => i, 
+              config.userdata = Dict{Symbol, Any}(:task => i,
                                                   :process => io_proc)
               push!(instances_arr, config)
               notify(c)

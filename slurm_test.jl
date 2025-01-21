@@ -16,6 +16,3 @@ ClusterManagers.addprocs_slurm(4; exeflags=["--project=.", "--color=yes"], job_f
     end
     end
 end
-
-
-
