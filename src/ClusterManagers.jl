@@ -19,6 +19,5 @@ include("condor.jl")
 include("slurm.jl")
 include("affinity.jl")
 include("elastic.jl")
-include("lsf.jl")
 
 end
