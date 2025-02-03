@@ -15,7 +15,6 @@ Implemented in this package (the `ClusterManagers.jl` package):
 
 | Job queue system | Command to add processors |
 | ---------------- | ------------------------- |
-| Load Sharing Facility (LSF) | `addprocs_lsf(np::Integer; bsub_flags=``, ssh_cmd=``)` or `addprocs(LSFManager(np, bsub_flags, ssh_cmd, retry_delays, throttle))` |
 | Sun Grid Engine (SGE) via `qsub` | `addprocs_sge(np::Integer; qsub_flags=``)` or `addprocs(SGEManager(np, qsub_flags))` |
 | Sun Grid Engine (SGE) via `qrsh` | `addprocs_qrsh(np::Integer; qsub_flags=``)` or `addprocs(QRSHManager(np, qsub_flags))` |
 | PBS (Portable Batch System) | `addprocs_pbs(np::Integer; qsub_flags=``)` or `addprocs(PBSManager(np, qsub_flags))` |
@@ -30,6 +29,7 @@ Implemented in external packages:
 
 | Job queue system | Command to add processors |
 | ---------------- | ------------------------- |
+| Load Sharing Facility (LSF) via [LSFClusterManager.jl](https://github.com/JuliaParallel/LSFClusterManager.jl) | `addprocs_lsf(np::Integer; bsub_flags=``, ssh_cmd=``)` or `addprocs(LSFManager(np, bsub_flags, ssh_cmd, retry_delays, throttle))` |
 | Kubernetes (K8s) via [K8sClusterManagers.jl](https://github.com/beacon-biosignals/K8sClusterManagers.jl) | `addprocs(K8sClusterManager(np; kwargs...))` |
 | Azure scale-sets via [AzManagers.jl](https://github.com/ChevronETC/AzManagers.jl) | `addprocs(vmtemplate, n; kwargs...)` |
 
@@ -131,11 +131,6 @@ that are tuned to make heavy use of caching to increase throughput, launching
 Julia workers can frequently timeout waiting for the standard output files to appear.
 In this case, it's better to use the `QRSHManager`, which uses SGE's `qrsh`
 command to bypass the filesystem and captures STDOUT directly.
-
-### Load Sharing Facility (LSF)
-
-`LSFManager` supports IBM's scheduler.  See the `addprocs_lsf` docstring
-for more information.
 
 ### Using `LocalAffinityManager` (for pinning local workers to specific cores)
 
