@@ -21,7 +21,7 @@ Implemented in this package (the `ClusterManagers.jl` package):
 | PBS (Portable Batch System) | `addprocs_pbs(np::Integer; qsub_flags=``)` or `addprocs(PBSManager(np, qsub_flags))` |
 | Scyld | `addprocs_scyld(np::Integer)` or `addprocs(ScyldManager(np))` |
 | HTCondor[^1] | `addprocs_htc(np::Integer)` or `addprocs(HTCManager(np))` |
-| Slurm | `addprocs_slurm(np::Integer; kwargs...)` or `addprocs(SlurmManager(np); kwargs...)` |
+| Slurm (deprecated - consider using [SlurmClusterManager.jl](https://github.com/kleinhenz/SlurmClusterManager.jl) instead) | `addprocs_slurm(np::Integer; kwargs...)` or `addprocs(SlurmManager(np); kwargs...)` |
 | Local manager with CPU affinity setting | `addprocs(LocalAffinityManager(;np=CPU_CORES, mode::AffinityMode=BALANCED, affinities=[]); kwargs...)` |
 
 [^1]: HTCondor was previously named Condor.
