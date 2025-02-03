@@ -4,6 +4,7 @@ using Distributed
 using Sockets
 using Pkg
 
+import LSFClusterManager
 import SlurmClusterManager
 
 export launch, manage, kill, init_worker, connect

@@ -1,20 +1,33 @@
 function addprocs_autodetect_current_scheduler(; kwargs...)
     sched = _autodetect_is_slurm()
+
     if sched == :slurm
-        return addprocs(SlurmClusterManager.SlurmManager(); kwargs...)
+        res = Distributed.addprocs(SlurmClusterManager.SlurmManager(); kwargs...)
+
+    elseif sched == :lsf
+        np = _lsf_get_numtasks()
+        res = LSFClusterManager.addprocs_lsf(np; kwargs...)
+
     elseif sched == :sge
         np = _sge_get_number_of_tasks()
-        return addprocs_sge(np; kwargs...)
+        res = addprocs_sge(np; kwargs...)
+
     elseif sched == :pbs
         np = _torque_get_numtasks()
-        return addprocs_pbs(np; kwargs...)
+        res = addprocs_pbs(np; kwargs...)
+
+    else
+        error("Unable to auto-detect cluster scheduler: $(sched)")
     end
-    error("Unable to auto-detect cluster scheduler: $(sched)")
+
+    return res
 end
 
 function autodetect_current_scheduler()
     if _autodetect_is_slurm()
         return :slurm
+    elseif _autodetect_is_lsf()
+        return :lsf
     elseif _autodetect_is_sge()
         return :sge
     elseif _autodetect_is_pbs()
@@ -30,6 +43,25 @@ function _autodetect_is_slurm()
     has_SLURM_JOBID = _has_env_nonempty("SLURM_JOBID")
     res = has_SLURM_JOB_ID || has_SLURM_JOBID
     return res
+end
+
+##### LSF:
+
+function _autodetect_is_lsf()
+    # https://www.ibm.com/docs/en/spectrum-lsf/10.1.0?topic=variables-environment-set-job-execution
+    has_LSB_JOBNAME = _has_env_nonempty("LSB_JOBNAME")
+    return has_LSB_JOBNAME
+end
+
+function _lsf_get_numtasks()
+    # https://www.ibm.com/docs/en/spectrum-lsf/10.1.0?topic=variables-environment-variable-reference
+    #
+    # See also:
+    # https://portal.supercomputing.wales/index.php/index/slurm/lsf-to-slurm-ref/
+    name = "LSB_DJOB_NUMPROC"
+    value_str = strip(ENV[name])
+    value_int = _getenv_parse_int(name)
+    return value_int
 end
 
 ##### SGE (Sun Grid Engine):
@@ -76,6 +108,12 @@ function _torque_get_numtasks()
 end
 
 ##### General utility functions:
+
+function _has_env_nonempty(name::AbstractString)
+    stripped_value = strip(get(ENV, name, ""))
+    res_b = !isempty(stripped_value)
+    return res_b
+end
 
 function _getenv_parse_int(name::AbstractString)
     if !haskey(ENV, name)
