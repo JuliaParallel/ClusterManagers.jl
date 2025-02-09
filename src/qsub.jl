@@ -20,6 +20,25 @@ end
 
 function launch(manager::Union{PBSManager, SGEManager, QRSHManager},
         params::Dict, instances_arr::Array, c::Condition)
+    let
+        if manager isa PBSManager
+            mgr_desc = "Portable Batch System (PBS)"
+        elseif manager isa SGEManager
+            mgr_desc = "Sun Grid Engine (SGE)"
+        else
+            # manager isa QRSHManager
+            #
+            # `qrsh` is only available for SGE.
+            # It is not available for OpenPBS.
+            mgr_desc = "Sun Grid Engine (SGE)"
+        end
+        msg = "The $(mgr_desc) functionality in ClusterManagers.jl is currently not actively maintained. " *
+              "We are currently looking for a new maintainer. " * 
+              "If you are an active user of the $(mgr_desc) functionality and are interested in becoming the maintainer, " *
+              "Please open an issue on the JuliaParallel/ClusterManagers.jl repo: " * 
+              "https://github.com/JuliaParallel/ClusterManagers.jl/issues"
+        Base.depwarn(msg, Symbol(typeof(manager)))
+    end
     try
         dir = params[:dir]
         exename = params[:exename]
