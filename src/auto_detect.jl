@@ -8,13 +8,15 @@ function addprocs_autodetect_current_scheduler(; kwargs...)
         np = _lsf_get_numtasks()
         res = LSFClusterManager.addprocs_lsf(np; kwargs...)
 
-    elseif sched == :sge
-        np = _sge_get_number_of_tasks()
-        res = addprocs_sge(np; kwargs...)
+    # elseif sched == :sge
+    #     # SGE is not currently maintained.
+    #     np = _sge_get_number_of_tasks()
+    #     res = addprocs_sge(np; kwargs...)
 
-    elseif sched == :pbs
-        np = _torque_get_numtasks()
-        res = addprocs_pbs(np; kwargs...)
+    # elseif sched == :pbs
+    #     # PBS is not currently maintained.
+    #     np = _torque_get_numtasks()
+    #     res = addprocs_pbs(np; kwargs...)
 
     else
         error("Unable to auto-detect cluster scheduler: $(sched)")
