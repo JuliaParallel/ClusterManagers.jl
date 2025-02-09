@@ -28,7 +28,7 @@ Implemented in external packages:
 
 | Job queue system | External package | Command to add processors |
 | ---------------- | ---------------- | ------------------------- |
-| Slurm | [SlurmClusterManager.jl](https://github.com/JuliaParallel/SlurmClusterManager.jl) | `addprocs_slurm(np::Integer; kwargs...)` or `addprocs(SlurmManager(np); kwargs...)` |
+| Slurm | [SlurmClusterManager.jl](https://github.com/JuliaParallel/SlurmClusterManager.jl) | `addprocs(SlurmManager(); kwargs...)` |
 | Load Sharing Facility (LSF) | [LSFClusterManager.jl](https://github.com/JuliaParallel/LSFClusterManager.jl) | `addprocs_lsf(np::Integer; bsub_flags=``, ssh_cmd=``)` or `addprocs(LSFManager(np, bsub_flags, ssh_cmd, retry_delays, throttle))` |
 | Kubernetes (K8s) | [K8sClusterManagers.jl](https://github.com/beacon-biosignals/K8sClusterManagers.jl) | `addprocs(K8sClusterManager(np; kwargs...))` |
 | Azure scale-sets | [AzManagers.jl](https://github.com/ChevronETC/AzManagers.jl) | `addprocs(vmtemplate, n; kwargs...)` |
