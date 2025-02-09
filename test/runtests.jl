@@ -41,7 +41,7 @@ qsub_is_installed() = !isnothing(Sys.which("qsub"))
 
     if qsub_is_installed()
         @info "Running the SGE (via qsub) tests..." Sys.which("qsub")
-        include("slurm.jl")
+        include("sge_qsub.jl")
     else
         if "sge_qsub" in test_args
             @error "ERROR: The SGE tests were explicitly requested in ARGS, but qsub was not found, so the SGE tests cannot be run" Sys.which("qsub") test_args
