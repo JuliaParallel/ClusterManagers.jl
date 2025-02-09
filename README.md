@@ -20,7 +20,6 @@ Implemented in this package (the `ClusterManagers.jl` package):
 | PBS (Portable Batch System) | `addprocs_pbs(np::Integer; qsub_flags=``)` or `addprocs(PBSManager(np, qsub_flags))` |
 | Scyld | `addprocs_scyld(np::Integer)` or `addprocs(ScyldManager(np))` |
 | HTCondor[^1] | `addprocs_htc(np::Integer)` or `addprocs(HTCManager(np))` |
-| Slurm | `addprocs_slurm(np::Integer; kwargs...)` or `addprocs(SlurmManager(np); kwargs...)` |
 | Local manager with CPU affinity setting | `addprocs(LocalAffinityManager(;np=CPU_CORES, mode::AffinityMode=BALANCED, affinities=[]); kwargs...)` |
 
 [^1]: HTCondor was previously named Condor.
@@ -29,44 +28,16 @@ Implemented in external packages:
 
 | Job queue system | External package | Command to add processors |
 | ---------------- | ---------------- | ------------------------- |
+| Slurm | [SlurmClusterManager.jl](https://github.com/JuliaParallel/SlurmClusterManager.jl) | `addprocs_slurm(np::Integer; kwargs...)` or `addprocs(SlurmManager(np); kwargs...)` |
 | Load Sharing Facility (LSF) | [LSFClusterManager.jl](https://github.com/JuliaParallel/LSFClusterManager.jl) | `addprocs_lsf(np::Integer; bsub_flags=``, ssh_cmd=``)` or `addprocs(LSFManager(np, bsub_flags, ssh_cmd, retry_delays, throttle))` |
 | Kubernetes (K8s) | [K8sClusterManagers.jl](https://github.com/beacon-biosignals/K8sClusterManagers.jl) | `addprocs(K8sClusterManager(np; kwargs...))` |
 | Azure scale-sets | [AzManagers.jl](https://github.com/ChevronETC/AzManagers.jl) | `addprocs(vmtemplate, n; kwargs...)` |
 
 You can also write your own custom cluster manager; see the instructions in the [Julia manual](https://docs.julialang.org/en/v1/manual/distributed-computing/#ClusterManagers).
 
-### Slurm: a simple example
+### Slurm: please see [SlurmClusterManager.jl](https://github.com/JuliaParallel/SlurmClusterManager.jl)
 
-```julia
-using Distributed, ClusterManagers
-
-# Arguments to the Slurm srun(1) command can be given as keyword
-# arguments to addprocs.  The argument name and value is translated to
-# a srun(1) command line argument as follows:
-# 1) If the length of the argument is 1 => "-arg value",
-#    e.g. t="0:1:0" => "-t 0:1:0"
-# 2) If the length of the argument is > 1 => "--arg=value"
-#    e.g. time="0:1:0" => "--time=0:1:0"
-# 3) If the value is the empty string, it becomes a flag value,
-#    e.g. exclusive="" => "--exclusive"
-# 4) If the argument contains "_", they are replaced with "-",
-#    e.g. mem_per_cpu=100 => "--mem-per-cpu=100"
-addprocs(SlurmManager(2), partition="debug", t="00:5:00")
-
-hosts = []
-pids = []
-for i in workers()
-	host, pid = fetch(@spawnat i (gethostname(), getpid()))
-	push!(hosts, host)
-	push!(pids, pid)
-end
-
-# The Slurm resource allocation is released when all the workers have
-# exited
-for i in workers()
-	rmprocs(i)
-end
-```
+For Slurm, please see the [SlurmClusterManager.jl](https://github.com/JuliaParallel/SlurmClusterManager.jl) package.
 
 ### SGE - a simple interactive example
 
