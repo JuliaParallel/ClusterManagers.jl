@@ -17,7 +17,7 @@ The following managers are implemented in this package (the `ClusterManagers.jl`
 | ---------------- | ------------------------- |
 | Local manager with CPU affinity setting | `addprocs(LocalAffinityManager(;np=CPU_CORES, mode::AffinityMode=BALANCED, affinities=[]); kwargs...)` |
 
-## Implemented in external packages
+### Implemented in external packages
 
 | Job queue system | External package | Command to add processors |
 | ---------------- | ---------------- | ------------------------- |
@@ -26,7 +26,7 @@ The following managers are implemented in this package (the `ClusterManagers.jl`
 | Kubernetes (K8s) | [K8sClusterManagers.jl](https://github.com/beacon-biosignals/K8sClusterManagers.jl) | `addprocs(K8sClusterManager(np; kwargs...))` |
 | Azure scale-sets | [AzManagers.jl](https://github.com/ChevronETC/AzManagers.jl) | `addprocs(vmtemplate, n; kwargs...)` |
 
-## Not currently being actively maintained
+### Not currently being actively maintained
 
 > [!WARNING]
 > The following managers are not currently being actively maintained or tested.
@@ -42,9 +42,11 @@ The following managers are implemented in this package (the `ClusterManagers.jl`
 | Scyld | `addprocs_scyld(np::Integer)` or `addprocs(ScyldManager(np))` |
 | HTCondor | `addprocs_htc(np::Integer)` or `addprocs(HTCManager(np))` |
 
-## Custom managers
+### Custom managers
 
 You can also write your own custom cluster manager; see the instructions in the [Julia manual](https://docs.julialang.org/en/v1/manual/distributed-computing/#ClusterManagers).
+
+## Notes on specific managers
 
 ### Slurm: please see [SlurmClusterManager.jl](https://github.com/JuliaParallel/SlurmClusterManager.jl)
 
