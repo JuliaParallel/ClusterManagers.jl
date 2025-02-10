@@ -5,6 +5,15 @@ struct ScyldManager <: ClusterManager
 end
 
 function launch(manager::ScyldManager, params::Dict, instances_arr::Array, c::Condition)
+    let
+        manager_description = "Scyld ClusterWare"
+        msg = "The $(mgr_desc) functionality in ClusterManagers.jl is currently not actively maintained. " *
+              "We are currently looking for a new maintainer. " * 
+              "If you are an active user of the $(mgr_desc) functionality and are interested in becoming the maintainer, " *
+              "Please open an issue on the JuliaParallel/ClusterManagers.jl repo: " * 
+              "https://github.com/JuliaParallel/ClusterManagers.jl/issues"
+        Base.depwarn(msg, Symbol(typeof(manager)))
+    end
     try
         dir = params[:dir]
         exename = params[:exename]
