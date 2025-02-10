@@ -88,4 +88,4 @@ Once workers are connected, you can print the `em` object again to see them adde
 
 ### Sun Grid Engine (SGE)
 
-See [docs/sge.md](docs/sge.md)
+See [`docs/sge.md`](docs/sge.md)
