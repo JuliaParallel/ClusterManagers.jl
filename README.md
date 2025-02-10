@@ -11,20 +11,15 @@ The `ClusterManagers.jl` package implements code for different job queue systems
 
 ## Available job queue systems
 
-Implemented in this package (the `ClusterManagers.jl` package):
+### In this package
+
+The following managers are implemented in this package (the `ClusterManagers.jl` package):
 
 | Job queue system | Command to add processors |
 | ---------------- | ------------------------- |
-| Sun Grid Engine (SGE) via `qsub` | `addprocs_sge(np::Integer; qsub_flags=``)` or `addprocs(SGEManager(np, qsub_flags))` |
-| Sun Grid Engine (SGE) via `qrsh` | `addprocs_qrsh(np::Integer; qsub_flags=``)` or `addprocs(QRSHManager(np, qsub_flags))` |
-| PBS (Portable Batch System) | `addprocs_pbs(np::Integer; qsub_flags=``)` or `addprocs(PBSManager(np, qsub_flags))` |
-| Scyld | `addprocs_scyld(np::Integer)` or `addprocs(ScyldManager(np))` |
-| HTCondor[^1] | `addprocs_htc(np::Integer)` or `addprocs(HTCManager(np))` |
 | Local manager with CPU affinity setting | `addprocs(LocalAffinityManager(;np=CPU_CORES, mode::AffinityMode=BALANCED, affinities=[]); kwargs...)` |
 
-[^1]: HTCondor was previously named Condor.
-
-Implemented in external packages:
+### Implemented in external packages
 
 | Job queue system | External package | Command to add processors |
 | ---------------- | ---------------- | ------------------------- |
@@ -33,7 +28,27 @@ Implemented in external packages:
 | Kubernetes (K8s) | [K8sClusterManagers.jl](https://github.com/beacon-biosignals/K8sClusterManagers.jl) | `addprocs(K8sClusterManager(np; kwargs...))` |
 | Azure scale-sets | [AzManagers.jl](https://github.com/ChevronETC/AzManagers.jl) | `addprocs(vmtemplate, n; kwargs...)` |
 
+### Not currently being actively maintained
+
+> [!WARNING]
+> The following managers are not currently being actively maintained or tested.
+>
+> We are seeking maintainers for the following managers. If you are an active user of any of the following job queue systems listed and are interested in being a maintainer, please open a GitHub issue - say that you are interested in being a maintainer, and specify which job queue system you use.
+>
+
+| Job queue system | Command to add processors |
+| ---------------- | ------------------------- |
+| Sun Grid Engine (SGE) via `qsub` | `addprocs_sge(np::Integer; qsub_flags=``)` or `addprocs(SGEManager(np, qsub_flags))` |
+| Sun Grid Engine (SGE) via `qrsh` | `addprocs_qrsh(np::Integer; qsub_flags=``)` or `addprocs(QRSHManager(np, qsub_flags))` |
+| PBS (Portable Batch System) | `addprocs_pbs(np::Integer; qsub_flags=``)` or `addprocs(PBSManager(np, qsub_flags))` |
+| Scyld | `addprocs_scyld(np::Integer)` or `addprocs(ScyldManager(np))` |
+| HTCondor | `addprocs_htc(np::Integer)` or `addprocs(HTCManager(np))` |
+
+### Custom managers
+
 You can also write your own custom cluster manager; see the instructions in the [Julia manual](https://docs.julialang.org/en/v1/manual/distributed-computing/#ClusterManagers).
+
+## Notes on specific managers
 
 ### Slurm: please see [SlurmClusterManager.jl](https://github.com/JuliaParallel/SlurmClusterManager.jl)
 
