@@ -11,6 +11,8 @@ The `ClusterManagers.jl` package implements code for different job queue systems
 
 ## Available job queue systems
 
+### In this package
+
 The following managers are implemented in this package (the `ClusterManagers.jl` package):
 
 | Job queue system | Command to add processors |
