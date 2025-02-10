@@ -85,3 +85,7 @@ ElasticManager:
 By default, the printed command uses the absolute path to the current Julia executable and activates the same project as the current session. You can change either of these defaults by passing `printing_kwargs=(absolute_exename=false, same_project=false))` to the first form of the `ElasticManager` constructor.
 
 Once workers are connected, you can print the `em` object again to see them added to the list of active workers.
+
+### Sun Grid Engine (SGE)
+
+See [docs/sge.md](docs/sge.md)
