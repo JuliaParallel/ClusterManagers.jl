@@ -15,6 +15,15 @@ end
 
 function launch(manager::SlurmManager, params::Dict, instances_arr::Array,
                 c::Condition)
+    let
+        msg = "The Slurm functionality in the `ClusterManagers.jl` package is deprecated " *
+              "(including `ClusterManagers.addprocs_slurm` and `ClusterManagers.SlurmManager`). " *
+              "It will be removed from ClusterManagers.jl in a future release. " *
+              "We recommend migrating to the " *
+              "[https://github.com/JuliaParallel/SlurmClusterManager.jl](https://github.com/JuliaParallel/SlurmClusterManager.jl) " *
+              "package instead."
+        Base.depwarn(msg, :SlurmManager; force = true)
+    end
     try
         exehome = params[:dir]
         exename = params[:exename]
