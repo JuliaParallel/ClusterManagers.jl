@@ -9,8 +9,6 @@ using Distributed: workers, nworkers
 using Distributed: procs, nprocs
 using Distributed: remotecall_fetch, @spawnat
 using Test: @testset, @test, @test_skip
-# ElasticManager:
-using ClusterManagers: ElasticManager
 # Slurm:
 using ClusterManagers: addprocs_slurm, SlurmManager
 # SGE:
@@ -24,8 +22,6 @@ slurm_is_installed() = !isnothing(Sys.which("sbatch"))
 qsub_is_installed() = !isnothing(Sys.which("qsub"))
 
 @testset "ClusterManagers.jl" begin
-    include("elastic.jl")
-
     if slurm_is_installed()
         @info "Running the Slurm tests..." Sys.which("sbatch")
         include("slurm.jl")
