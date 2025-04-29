@@ -16,7 +16,6 @@ worker_arg() = `--worker=$(worker_cookie())`
 include("qsub.jl")
 include("scyld.jl")
 include("condor.jl")
-include("slurm.jl")
 include("affinity.jl")
 
 end
