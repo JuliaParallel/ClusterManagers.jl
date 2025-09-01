@@ -44,7 +44,7 @@ jobs:
           - '1.10' # current LTS
           - '1'    # automatically expands to the latest stable 1.x release of Julia
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         persist-credentials: false
     - uses: julia-actions/setup-julia@v2
@@ -76,7 +76,7 @@ jobs:
           - '1.10.7' # current LTS
           - '1.11.2' # currently the latest stable release
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         persist-credentials: false
     - name: Print Docker version
