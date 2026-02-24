@@ -64,4 +64,7 @@ For `ElasticManager`, please see the [ElasticClusterManager.jl](https://github.c
 
 ### Sun Grid Engine (SGE)
 
+> [!WARNING]
+> The SGE manager is not currently being actively maintained or tested.
+
 See [`docs/sge.md`](docs/sge.md)
