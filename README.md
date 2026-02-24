@@ -27,7 +27,6 @@ The following managers are implemented in this package (the `ClusterManagers.jl`
 | Load Sharing Facility (LSF) | [LSFClusterManager.jl](https://github.com/JuliaParallel/LSFClusterManager.jl) | `addprocs_lsf(np::Integer; bsub_flags=``, ssh_cmd=``)` or `addprocs(LSFManager(np, bsub_flags, ssh_cmd, retry_delays, throttle))` |
 | ElasticManager | [ElasticClusterManager.jl](https://github.com/JuliaParallel/ElasticClusterManager.jl) | `addprocs(ElasticManager(...); kwargs...)` |
 | Kubernetes (K8s) | [K8sClusterManagers.jl](https://github.com/beacon-biosignals/K8sClusterManagers.jl) | `addprocs(K8sClusterManager(np; kwargs...))` |
-| Azure scale-sets | [AzManagers.jl](https://github.com/ChevronETC/AzManagers.jl) | `addprocs(vmtemplate, n; kwargs...)` |
 
 ### Not currently being actively maintained
 
