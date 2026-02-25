@@ -3,11 +3,7 @@
 The `ClusterManagers.jl` package implements code for different job queue systems commonly used on compute clusters.
 
 > [!WARNING]
-> This package is not currently being actively maintained or tested.
->
-> We are in the process of splitting this package up into multiple smaller packages, with a separate package for each job queue systems.
->
-> We are seeking maintainers for these new packages. If you are an active user of any of the job queue systems listed below and are interested in being a maintainer, please open a GitHub issue - say that you are interested in being a maintainer, and specify which job queue system you use.
+> Some of the cluster managers in this package are not currently being actively maintained or tested. Please see the tables below to determine which managers are/are not maintained.
 
 ## Available job queue systems
 
